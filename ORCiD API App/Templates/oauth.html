@@ -2,6 +2,12 @@
 {% block title %}OAuth Page{% endblock %}
 {% block content %}
 <p>This is my page the user is redirected to if the authentication works</p>
-<p>{{ response }}</p>
 <p>{{ url }}</p>
+<form method="post">
+    {% for option in data %}
+        <input type="checkbox" name="options" value="{{ option }}">{{ option }}<br>
+    {% endfor %}
+    <br>
+    <input type="submit" value="Submit">
+</form>
 {% endblock%}

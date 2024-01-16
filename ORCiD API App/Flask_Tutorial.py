@@ -39,13 +39,18 @@ def home():
 def test():
     return render_template("test.html")
 
-@app.route('/api/oauth2')
-def get_oauth_data():
+def load_json_file(file_path):
+    with open(file_path, 'r') as file:
+        data = json.load(file)
+    return data
+
+@app.route('/api/oauth2', methods=['GET', 'POST'])
+def get_oauth_data2():
     # Access token for the ORCiD API
     access_token = 'db8a13cb-49cb-418e-8004-6b4b9d1beea6'
 
     # URL for the GET request
-    url = 'https://pub.sandbox.orcid.org/v3.0/0009-0006-4684-0381/record'
+    url = 'https://pub.sandbox.orcid.org/v3.0/0009-0006-4684-0381/educations'
 
     # Headers including Content-type and Authorization with Bearer token
     headers = {
@@ -66,8 +71,11 @@ def get_oauth_data():
         with open(file_path, 'w') as file:
             json.dump(response_dict, file, indent=2)
 
-        # Return the rendered template
-        return render_template("oauth.html", response=response.__dict__, url=url)
+        # Load the JSON data from the file
+        data = load_json_file(file_path)
+
+        # Return the rendered template with the parsed JSON data
+        return render_template("oauth.html", response=data, url=url)
     else:
         # Print an error message if the request was not successful
         print(f'Error: {response.status_code} - {response.text}')
