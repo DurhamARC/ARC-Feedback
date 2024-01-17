@@ -4,10 +4,9 @@
     <title>Filled Text Input Form</title>
 </head>
 <body>
-    <form method="post" action="/api/oauth2">
-        <label for="input_data">Enter Data:</label>
-        <!-- Use the placeholder attribute for filler text -->
-        <input type="text" id="input_data" name="input_data" placeholder="Type your text here" required>
+    <form action="/api/oauth2" method="post">
+        <label for="orcidInput">Enter ORCID ID:</label>
+        <input type="text" id="orcidInput" name="orcidInput" placeholder="0000-0000-0000-0000" required>
         <button type="submit">Submit</button>
     </form>
 </body>
