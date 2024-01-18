@@ -109,10 +109,10 @@ def get_orcid_data():
         orcid_id = request.form.get('orcidInput')
 
         # URL for the GET request with the ORCID ID as a parameter
-        url = f'https://orcid.org/v3.0/{orcid_id}/works'
+        url = f'https://pub.orcid.org/v3.0/{orcid_id}/works'
     else:
         # Default URL for the GET request without the ORCID ID (replace {ORCID_ID} with an actual ORCID ID)
-        url = 'https://orcid.org/v3.0/{ORCID_ID}/works'
+        url = 'https://pub.orcid.org/v3.0/{ORCID_ID}/works'
 
     # Headers including Content-type and Authorization with Bearer token
     headers = {
@@ -135,7 +135,7 @@ def get_orcid_data():
 
         # Return the rendered template with the parsed JSON data
         return render_template("oauth.html", response=response_dict, url=url)
-    else:
+    #else:
         # Print an error message if the request was not successful
         print(f'Error: {response.status_code} - {response.text}')
         # Return an error response in JSON format
