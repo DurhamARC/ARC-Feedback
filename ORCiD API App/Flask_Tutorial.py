@@ -2,6 +2,7 @@ from flask import Flask, redirect, url_for, render_template, request, jsonify
 import requests
 import json
 import xml.etree.ElementTree as ET
+import pandas as pd
 
 app = Flask(__name__)
 
@@ -182,6 +183,42 @@ def get_access_token():
         print(f"Error: {response.status_code} - {response.text}")
         # You might want to return an error response in a real application
         return jsonify({"error": f"{response.status_code} - {response.text}"}), response.status_code
+
+@app.route('/process_form', methods=['POST'])
+def process_form():
+    selected_titles = request.form.getlist('selected_titles')
+    username = request.form.getlist('username')  
+
+    # Create a DataFrame with the selected titles and ORCiD
+    df = pd.DataFrame({
+        'Selected Titles': selected_titles,
+        'ORCiD': [username] * len(selected_titles)
+    })
+
+    # Specify the Excel file path
+    excel_file_path = 'selected_titles.xlsx'
+
+    try:
+        # Load the existing Excel file
+        existing_df = pd.read_excel(excel_file_path)
+
+        # Append the new data to the existing DataFrame
+        updated_df = pd.concat([existing_df, df], ignore_index=True)
+
+        # Write the updated DataFrame to the Excel file
+        updated_df.to_excel(excel_file_path, index=False, sheet_name='Sheet1')
+
+        # You can also add additional processing logic here
+
+        return redirect('/index3')  # Redirect back to the form page or any other page
+
+    except FileNotFoundError:
+        # If the file doesn't exist, write the DataFrame as a new file
+        df.to_excel(excel_file_path, index=False)
+        return redirect('/index3')  # Redirect back to the form page or any other page
+
+
+
 
 if __name__ == "__main__":
     app.run(debug=True)
