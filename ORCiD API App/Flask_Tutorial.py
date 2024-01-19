@@ -131,12 +131,24 @@ def get_orcid_data():
         with open(file_path, 'w') as file:
             file.write(response.text)
 
-        # Parse the XML response (optional)
-        root = ET.fromstring(response.text)
-        # Now you can work with the XML data as needed
+        # Parse the XML data
+        with open(file_path, 'r') as file:
+            xml_data = file.read()
 
-        # Return the rendered template with the XML data
-        return render_template("oauth.html", response=response.text, url=url)
+        # Define XML namespaces
+        namespaces = {
+        'activities': 'http://www.orcid.org/ns/activities',
+        'common': 'http://www.orcid.org/ns/common',
+        'work': 'http://www.orcid.org/ns/work',
+        }
+
+        root = ET.fromstring(xml_data)
+
+        # Extract the titles from the XML
+        titles = [title.text for title in root.findall('.//common:title', namespaces)]
+
+        # Pass the titles to the template
+        return render_template('oauth.html', titles=titles)
     else:
         # Print an error message if the request was not successful
         print(f'Error: {response.status_code} - {response.text}')
