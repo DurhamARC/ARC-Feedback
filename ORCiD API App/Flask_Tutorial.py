@@ -1,6 +1,7 @@
 from flask import Flask, redirect, url_for, render_template, request, jsonify
 import requests
 import json
+import xml.etree.ElementTree as ET
 
 app = Flask(__name__)
 
@@ -116,7 +117,7 @@ def get_orcid_data():
 
     # Headers including Content-type and Authorization with Bearer token
     headers = {
-        'Content-type': 'application/vnd.orcid+json',
+        'Content-type': 'application/vnd.orcid+xml',  # Change content-type to XML
         'Authorization': f'Bearer {access_token}'
     }
 
@@ -125,17 +126,18 @@ def get_orcid_data():
 
     # Check if the request was successful (status code 200)
     if response.status_code == 200:
-        # Parse the JSON response
-        response_dict = response.json()
-
-        # Save the JSON data to a file (optional)
-        file_path = 'response_data.json'
+        # Save the XML response to a file (optional)
+        file_path = 'response_data.xml'
         with open(file_path, 'w') as file:
-            json.dump(response_dict, file, indent=2)
+            file.write(response.text)
 
-        # Return the rendered template with the parsed JSON data
-        return render_template("oauth.html", response=response_dict, url=url)
-    #else:
+        # Parse the XML response (optional)
+        root = ET.fromstring(response.text)
+        # Now you can work with the XML data as needed
+
+        # Return the rendered template with the XML data
+        return render_template("oauth.html", response=response.text, url=url)
+    else:
         # Print an error message if the request was not successful
         print(f'Error: {response.status_code} - {response.text}')
         # Return an error response in JSON format
