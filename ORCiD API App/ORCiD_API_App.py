@@ -8,7 +8,11 @@ app = Flask(__name__)
 
 @app.route("/")
 def home():
-    return render_template("index.html")
+    return render_template("home.html")
+
+@app.route("/orcid_works_search")
+def orcid_works_search():
+    return render_template("orcid_id_works.html")
 
 @app.route('/api/orcid', methods=['GET', 'POST'])
 def get_orcid_data():
