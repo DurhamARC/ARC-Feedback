@@ -1,9 +1,9 @@
 {% extends "base.html" %}
 {% block title %}Home Page{% endblock %}
-{% block content %}    
-    <h1>Durham University Research Finder</h1>
-    <p>Welcome to the Durham University Research Finder.</p>
-    <p>This webpage will help you to check on your current work and grants.</p>
-    <p>Click the button below to get started.</p>
-    <button>Log in to ORCiD</button>
+{% block content %}
+<form action="/api/orcid" method="post">
+    <label for="orcidInput">Enter ORCID ID:</label>
+    <input type="text" id="orcidInput" name="orcidInput" placeholder="0000-0000-0000-0000" required>
+    <button type="submit">Submit</button>
+</form>
 {% endblock%}
