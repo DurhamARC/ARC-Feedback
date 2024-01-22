@@ -1,9 +1,0 @@
-{% extends "base.html" %}
-{% block title %}Home Page{% endblock %}
-{% block content %}
-<form action="/api/orcid" method="post">
-    <label for="orcidInput">Enter ORCID ID:</label>
-    <input type="text" id="orcidInput" name="orcidInput" placeholder="0000-0000-0000-0000" required>
-    <button type="submit">Submit</button>
-</form>
-{% endblock%}
