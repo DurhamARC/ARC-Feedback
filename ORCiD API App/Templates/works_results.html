@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}OAuth Page{% endblock %}
+{% block content %}
+<style>
+    form {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .form-group {
+        display: flex;
+        align-items: center;
+        margin-bottom: 10px; /* Adjust the margin between form groups */
+    }
+
+    label {
+        margin-right: 10px; /* Adjust the margin between label and input */
+    }
+</style>
+
+<form action="/process_form" method="post">
+    <div class="form-group">
+        <label for="username">Enter your name:</label>
+        <input type="text" name="username" value="{{ username }}">
+    </div>
+
+    {% for title in titles %}
+        <div class="form-group">
+            <label>
+                <input type="checkbox" name="selected_titles" value="{{ title }}">
+                {{ title }}
+            </label>
+        </div>
+    {% endfor %}
+    
+    <button type="submit">Submit</button>
+</form>
+{% endblock %}

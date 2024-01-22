@@ -1,14 +1,18 @@
 {% extends "base.html" %}
-{% block title %}OAuth Page{% endblock %}
+{% block title %}Home Page{% endblock %}
+{% set page = 'home' %}
 {% block content %}
-<h1>Durham University Research Finder</h1>
-<p>Welcome to Durham University Research Finder.</p>
-<p>The purpose of this app is to help speed up the process of keeping the ARC team up to date with your current research.</p>
-<p>Follow the link to the relevant page, either publications or funding.</p> 
-<p>From there you will be asked to enter your ORCiD ID, the app will then return items from your record to you in the form of a checkbox list.</p>
-<p>Simply check all the work or funding that currently applies and click the submit button.</p>
-<p>This data is then stored for the ARC team to keep track of.</p>
-<a href='orcid_works_search'>
-    <button> Publications </button>
-</a>
+    <h1>Durham University Research Finder</h1>
+    <p>Welcome to Durham University Research Finder.</p>
+    <p>The purpose of this app is to help speed up the process of keeping the ARC team up to date with your current research.</p>
+    <p>Follow the link to the relevant page, either publications or funding.</p> 
+    <p>From there you will be asked to enter your ORCiD ID, the app will then return items from your record to you in the form of a checkbox list.</p>
+    <p>Simply check all the Publications or Fundings that currently applies and click the submit button.</p>
+    <p>This data is then stored for the ARC team to keep track of.</p>
+    <a href='orcid_works_search'>
+        <button> Publications </button>
+    </a>
+    <a href='orcid_fundings_search'>
+        <button disabled> Fundings </button>
+    </a>
 {% endblock%}
