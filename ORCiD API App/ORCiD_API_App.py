@@ -18,9 +18,11 @@ class OrcidApp(BaseFlaskApp):
         self.app.route("/")(self.home)
         self.app.route("/orcid_works_search")(self.orcid_works_search)
         self.app.route("/orcid_fundings_search")(self.orcid_fundings_search)
-        self.app.route('/api/orcid', methods=['GET', 'POST'])(self.get_orcid_data)
+        self.app.route('/orcid/works', methods=['GET', 'POST'])(self.get_orcid_works_data)
+        self.app.route('/orcid/fundings', methods=['GET', 'POST'])(self.get_orcid_fundings_data)
         self.app.route('/api/token', methods=['GET', 'POST'])(self.get_access_token)
-        self.app.route('/process_form', methods=['POST'])(self.process_form)
+        self.app.route('/process_works_form', methods=['POST'])(self.process_works_form)
+        self.app.route('/process_fundings_form', methods=['POST'])(self.process_fundings_form)
 
     def home(self):
         return render_template("home.html")
@@ -31,7 +33,7 @@ class OrcidApp(BaseFlaskApp):
     def orcid_fundings_search(self):
         return render_template("orcid_id_fundings.html")
 
-    def get_orcid_data(self):
+    def get_orcid_works_data(self):
         # Access token for the ORCiD API (replace with your actual method of obtaining the token)
         access_token = '21ca369a-65f6-4b6c-aed5-44a5e85b0ee4'
 
@@ -57,7 +59,63 @@ class OrcidApp(BaseFlaskApp):
         # Check if the request was successful (status code 200)
         if response.status_code == 200:
             # Save the XML response to a file (optional)
-            file_path = 'response_data.xml'
+            file_path = 'works_response_data.xml'
+            with open(file_path, 'w') as file:
+                file.write(response.text)
+
+            # Parse the XML data
+            with open(file_path, 'r') as file:
+                xml_data = file.read()
+
+            # Define XML namespaces
+            namespaces = {
+            'activities': 'http://www.orcid.org/ns/activities',
+            'common': 'http://www.orcid.org/ns/common',
+            'work': 'http://www.orcid.org/ns/work',
+            }
+
+            root = ET.fromstring(xml_data)
+
+            # Extract the titles from the XML
+            titles = [title.text for title in root.findall('.//common:title', namespaces)]
+            username = [username.text for username in root.find('.//common:source-name', namespaces)]
+
+            # Pass the titles to the template
+            return render_template('works_results.html', titles=titles, username=username)
+        else:
+            # Print an error message if the request was not successful
+            print(f'Error: {response.status_code} - {response.text}')
+            # Return an error response in JSON format
+            return jsonify({"error": f"{response.status_code} - {response.text}"}), response.status_code
+            pass
+
+    def get_orcid_fundings_data(self):
+        # Access token for the ORCiD API (replace with your actual method of obtaining the token)
+        access_token = '21ca369a-65f6-4b6c-aed5-44a5e85b0ee4'
+
+        if request.method == 'POST':
+            # Get the ORCID ID from the form
+            orcid_id = request.form.get('orcidInput')
+
+            # URL for the GET request with the ORCID ID as a parameter
+            url = f'https://pub.orcid.org/v3.0/{orcid_id}/fundings'
+        else:
+            # Default URL for the GET request without the ORCID ID (replace {ORCID_ID} with an actual ORCID ID)
+            url = 'https://pub.orcid.org/v3.0/{ORCID_ID}/fundings'
+
+        # Headers including Content-type and Authorization with Bearer token
+        headers = {
+            'Content-type': 'application/vnd.orcid+xml',  # Change content-type to XML
+            'Authorization': f'Bearer {access_token}'
+        }
+
+        # Make the GET request
+        response = requests.get(url, headers=headers)
+
+        # Check if the request was successful (status code 200)
+        if response.status_code == 200:
+            # Save the XML response to a file (optional)
+            file_path = 'fundings_response_data.xml'
             with open(file_path, 'w') as file:
                 file.write(response.text)
 
@@ -78,7 +136,7 @@ class OrcidApp(BaseFlaskApp):
             titles = [title.text for title in root.findall('.//common:title', namespaces)]
 
             # Pass the titles to the template
-            return render_template('works_results.html', titles=titles)
+            return render_template('fundings_results.html', titles=titles)
         else:
             # Print an error message if the request was not successful
             print(f'Error: {response.status_code} - {response.text}')
@@ -114,7 +172,7 @@ class OrcidApp(BaseFlaskApp):
             return jsonify({"error": f"{response.status_code} - {response.text}"}), response.status_code
             pass
 
-    def process_form(self):
+    def process_works_form(self):
         selected_titles = request.form.getlist('selected_titles')
         username = request.form.getlist('username')  
 
@@ -125,7 +183,7 @@ class OrcidApp(BaseFlaskApp):
         })
 
         # Specify the Excel file path
-        excel_file_path = 'selected_titles.xlsx'
+        excel_file_path = 'publications_and_fundings.xlsx'
 
         try:
             # Load the existing Excel file
@@ -136,6 +194,39 @@ class OrcidApp(BaseFlaskApp):
 
             # Write the updated DataFrame to the Excel file
             updated_df.to_excel(excel_file_path, index=False, sheet_name='Sheet1')
+
+            # You can also add additional processing logic here
+
+            return redirect('/')  # Redirect back to the form page or any other page
+
+        except FileNotFoundError:
+            # If the file doesn't exist, write the DataFrame as a new file
+            df.to_excel(excel_file_path, index=False)
+            return redirect('/')  # Redirect back to the form page or any other page
+            pass
+    
+    def process_fundings_form(self):
+        selected_titles = request.form.getlist('selected_titles')
+        username = request.form.getlist('username')  
+
+        # Create a DataFrame with the selected titles and ORCiD
+        df = pd.DataFrame({
+            'Selected Titles': selected_titles,
+            'ORCiD': [username] * len(selected_titles)
+        })
+
+        # Specify the Excel file path
+        excel_file_path = 'publications_and_fundings.xlsx'
+
+        try:
+            # Load the existing Excel file
+            existing_df = pd.read_excel(excel_file_path)
+
+            # Append the new data to the existing DataFrame
+            updated_df = pd.concat([existing_df, df], ignore_index=True)
+
+            # Write the updated DataFrame to the Excel file
+            updated_df.to_excel(excel_file_path, index=False, sheet_name='Sheet2')
 
             # You can also add additional processing logic here
 

@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Works Results{% endblock %}
+{% block title %}Fundings Results{% endblock %}
 {% block content %}
 <style>
     form {
@@ -18,11 +18,11 @@
         margin-right: 10px; /* Adjust the margin between label and input */
     }
 </style>
-<p>{{ username }}
-<form action="/process_works_form" method="post">
+
+<form action="/process_fundings_form" method="post">
     <div class="form-group">
-        <label for="user">Enter your name:</label>
-        <input type="text" name="user" value="{{ user }}">
+        <label for="username">Enter your name:</label>
+        <input type="text" name="username" value="{{ username }}">
     </div>
 
     {% for title in titles %}
