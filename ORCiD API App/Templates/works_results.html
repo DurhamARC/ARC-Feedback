@@ -18,15 +18,16 @@
         margin-right: 10px; /* Adjust the margin between label and input */
     }
 </style>
-<p>{{ username }}
 <form action="/process_works_form" method="post">
     <div class="form-group">
-        <label for="user">Enter your name:</label>
-        <input type="text" name="user" value="{{ user }}">
+        <label for="username">Enter your name:</label>
+        <input type="text" name="username" value="{{ username }}">
     </div>
 
+    <p> Please select all the publications that you have worked on using the ARC infrastructure. </p>
+
     {% for title in titles %}
-        <div class="form-group">7
+        <div class="form-group">
             <label>
                 <input type="checkbox" name="selected_titles" value="{{ title }}">
                 {{ title }}

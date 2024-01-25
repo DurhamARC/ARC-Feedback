@@ -78,10 +78,9 @@ class OrcidApp(BaseFlaskApp):
 
             # Extract the titles from the XML
             titles = [title.text for title in root.findall('.//common:title', namespaces)]
-            username = [username.text for username in root.find('.//common:source-name', namespaces)]
 
             # Pass the titles to the template
-            return render_template('works_results.html', titles=titles, username=username)
+            return render_template('works_results.html', titles=titles)
         else:
             # Print an error message if the request was not successful
             print(f'Error: {response.status_code} - {response.text}')
