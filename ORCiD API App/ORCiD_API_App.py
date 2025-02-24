@@ -1,8 +1,9 @@
-from flask import Flask, redirect, render_template, request, jsonify, current_app
+from flask import Flask, redirect, render_template, request, jsonify, current_app, flash
 import requests
 import json
 import xml.etree.ElementTree as ET
 import pandas as pd
+import re
 
 class BaseFlaskApp:
     def __init__(self, app_name):
@@ -14,7 +15,6 @@ class BaseFlaskApp:
 class OrcidApp(BaseFlaskApp):
     def __init__(self, app_name):
         super().__init__(app_name)
-
         self.app.route("/")(self.home)
         self.app.route("/orcid_works_search")(self.orcid_works_search)
         self.app.route("/orcid_fundings_search")(self.orcid_fundings_search)
@@ -23,6 +23,7 @@ class OrcidApp(BaseFlaskApp):
         self.app.route('/api/token', methods=['GET', 'POST'])(self.get_access_token)
         self.app.route('/process_works_form', methods=['POST'])(self.process_works_form)
         self.app.route('/process_fundings_form', methods=['POST'])(self.process_fundings_form)
+        self.app.secret_key = "ARC-DURHAM-UNIVERSITY-2025" # Secret key used for flask methods such as "flash()"
 
     def home(self):
         return render_template("home.html")
@@ -35,7 +36,7 @@ class OrcidApp(BaseFlaskApp):
 
     # NEW HELPER METHOD
     def _fetch_orcid_token(self):
-        """Fetches ORCID access token using client credentials."""
+        """Fetches ORCiD access token using client credentials."""
         url = "https://orcid.org/oauth/token"
         headers = {"Accept": "application/json"}
         data = {
@@ -52,6 +53,7 @@ class OrcidApp(BaseFlaskApp):
             current_app.logger.info(f"Token fetch failed: {response.status_code} - {response.text}")
             return None
 
+
     # UPDATED ROUTE HANDLER
     def get_access_token(self):
         """Route handler for /api/token (returns JSON token)."""
@@ -60,15 +62,23 @@ class OrcidApp(BaseFlaskApp):
             return jsonify({"access_token": token})
         else:
             return jsonify({"error": "Failed to fetch token"}), 500
-
+        
+    def _validate_orcid_id(self, orcid_id):
+            """Validates ORCiD format (XXXX-XXXX-XXXX-XXXX)."""
+            pattern = r'^\d{4}-\d{4}-\d{4}-\d{3}[\dX]$'
+            return re.match(pattern, orcid_id.strip()) is not None
+            
     def get_orcid_works_data(self):
         # Fetch token dynamically
         access_token = self._fetch_orcid_token()
         if not access_token:
-            return jsonify({"error": "Failed to obtain ORCID access token"}), 500
+            return jsonify({"error": "Token failure"}), 500
 
         if request.method == 'POST':
             orcid_id = request.form.get('orcidInput')
+            if not self._validate_orcid_id(orcid_id):
+                flash("Invalid ORCiD. Use the XXXX-XXXX-XXXX-XXXX format.")
+                return redirect(request.referrer)
             url = f'https://pub.orcid.org/v3.0/{orcid_id}/works'
         else:
             url = 'https://pub.orcid.org/v3.0/{ORCID_ID}/works'
@@ -113,18 +123,18 @@ class OrcidApp(BaseFlaskApp):
             pass
 
     def get_orcid_fundings_data(self):
-        # Fetch token dynamically
         access_token = self._fetch_orcid_token()
         if not access_token:
-            return jsonify({"error": "Failed to obtain ORCID access token"}), 500
+            return jsonify({"error": "Token failure"}), 500
 
         if request.method == 'POST':
-            # Get the ORCID ID from the form
             orcid_id = request.form.get('orcidInput')
-            url = f'https://pub.orcid.org/v3.0/{orcid_id}/fundings'
+            if not self._validate_orcid_id(orcid_id):
+                flash("Invalid ORCiD. Use the XXXX-XXXX-XXXX-XXXX format.")
+                return redirect(request.referrer)
+            url = f'https://pub.orcid.org/v3.0/{orcid_id}/works'
         else:
-            # Default URL (might remove this or handle it)
-            url = 'https://pub.orcid.org/v3.0/{ORCID_ID}/fundings'
+            url = 'https://pub.orcid.org/v3.0/{ORCID_ID}/works'
 
         headers = {
             'Content-type': 'application/vnd.orcid+xml',
