@@ -1,4 +1,4 @@
-from flask import Flask, redirect, render_template, request, jsonify
+from flask import Flask, redirect, render_template, request, jsonify, current_app
 import requests
 import json
 import xml.etree.ElementTree as ET
@@ -46,10 +46,10 @@ class OrcidApp(BaseFlaskApp):
         }
         response = requests.post(url, headers=headers, data=data)
         if response.status_code == 200:
-            print("Token fetch successful")
+            current_app.logger.info('Token fetch successful')
             return response.json().get("access_token")
         else:
-            print(f"Token fetch failed: {response.status_code} - {response.text}")
+            current_app.logger.info(f"Token fetch failed: {response.status_code} - {response.text}")
             return None
 
     # UPDATED ROUTE HANDLER
@@ -106,8 +106,8 @@ class OrcidApp(BaseFlaskApp):
             # Pass the titles to the template
             return render_template('works_results.html', titles=titles)
         else:
-            # Print an error message if the request was not successful
-            print(f'Error: {response.status_code} - {response.text}')
+            # Error message if the request is not successful
+            current_app.logger.info(f'Error: {response.status_code} - {response.text}')
             # Return an error response in JSON format
             return jsonify({"error": f"{response.status_code} - {response.text}"}), response.status_code
             pass
@@ -158,7 +158,7 @@ class OrcidApp(BaseFlaskApp):
             return render_template('fundings_results.html', titles=titles)
         else:
             # Handle errors
-            print(f'Error: {response.status_code} - {response.text}')
+            current_app.logger.info(f'Error: {response.status_code} - {response.text}')
             return jsonify({"error": f"{response.status_code} - {response.text}"}), response.status_code
 
     def process_works_form(self):
