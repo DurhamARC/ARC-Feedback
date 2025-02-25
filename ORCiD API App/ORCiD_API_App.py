@@ -1,6 +1,5 @@
 from flask import Flask, redirect, render_template, request, jsonify, current_app, flash
 import requests
-import json
 import xml.etree.ElementTree as ET
 import pandas as pd
 import re
@@ -16,13 +15,13 @@ class OrcidApp(BaseFlaskApp):
     def __init__(self, app_name):
         super().__init__(app_name)
         self.app.route("/")(self.home)
-        self.app.route("/orcid_works_search")(self.orcid_works_search)
-        self.app.route("/orcid_fundings_search")(self.orcid_fundings_search)
-        self.app.route('/orcid/works', methods=['GET', 'POST'])(self.get_orcid_works_data)
-        self.app.route('/orcid/fundings', methods=['GET', 'POST'])(self.get_orcid_fundings_data)
+        self.app.route("/publications/search")(self.orcid_works_search)
+        self.app.route("/fundings/search")(self.orcid_fundings_search)
+        self.app.route('/publications', methods=['GET', 'POST'])(self.get_orcid_works_data)
+        self.app.route('/fundings', methods=['GET', 'POST'])(self.get_orcid_fundings_data)
         self.app.route('/api/token', methods=['GET', 'POST'])(self.get_access_token)
-        self.app.route('/process_works_form', methods=['POST'])(self.process_works_form)
-        self.app.route('/process_fundings_form', methods=['POST'])(self.process_fundings_form)
+        self.app.route('/process/publications', methods=['POST'])(self.process_works_form)
+        self.app.route('/process/fundings', methods=['POST'])(self.process_fundings_form)
         self.app.secret_key = "ARC-DURHAM-UNIVERSITY-2025" # Secret key used for flask methods such as "flash()"
 
     def home(self):
@@ -64,7 +63,7 @@ class OrcidApp(BaseFlaskApp):
             return jsonify({"error": "Failed to fetch token"}), 500
         
     def _validate_orcid_id(self, orcid_id):
-            """Validates ORCiD format (XXXX-XXXX-XXXX-XXXX)."""
+            """Validates ORCiD format"""
             pattern = r'^\d{4}-\d{4}-\d{4}-\d{3}[\dX]$'
             return re.match(pattern, orcid_id.strip()) is not None
             
