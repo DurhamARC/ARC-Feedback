@@ -191,7 +191,8 @@ class OrcidApp(BaseFlaskApp):
             updated_df = pd.concat([existing_df, df], ignore_index=True)
 
             # Write the updated DataFrame to the Excel file
-            updated_df.to_excel(excel_file_path, index=False, sheet_name='Sheet1')
+            with pd.ExcelWriter(excel_file_path, engine="openpyxl", mode="a", if_sheet_exists="overlay") as writer:
+                updated_df.to_excel(writer, sheet_name= 'Works', index=False)
 
             # Additional processing logic possible here 
 
@@ -215,7 +216,7 @@ class OrcidApp(BaseFlaskApp):
 
         # Specify the Excel file path
         excel_file_path = 'publications_and_fundings.xlsx'
-
+        
         try:
             # Load the existing Excel file
             existing_df = pd.read_excel(excel_file_path)
@@ -224,7 +225,8 @@ class OrcidApp(BaseFlaskApp):
             updated_df = pd.concat([existing_df, df], ignore_index=True)
 
             # Write the updated DataFrame to the Excel file
-            updated_df.to_excel(excel_file_path, index=False, sheet_name='Sheet2')
+            with pd.ExcelWriter(excel_file_path, engine="openpyxl", mode="a", if_sheet_exists="overlay") as writer:
+                updated_df.to_excel(writer, sheet_name= 'Works', index=False)
 
             # You can also add additional processing logic here
 
