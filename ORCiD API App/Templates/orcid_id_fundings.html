@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}ORCID Fundings Search{% endblock %}
+{% block title %}ORCiD Fundings Search{% endblock %}
 {% set page = 'fundings' %}
 {% block content %}
 <style>
@@ -103,7 +103,7 @@
             font-size: 2.5rem;
             font-weight: 700;
             letter-spacing: -0.5px;">
-            ORCID Fundings
+            ORCiD Fundings
         </h1>
 
         <p style="color: #636363;
@@ -113,11 +113,10 @@
             max-width: 320px;
             margin-left: auto;
             margin-right: auto;">
-            Enter your ORCID identifier below to search for research fundings
+            Enter your ORCiD identifier below to search for research fundings
         </p>
         
         <form action="/fundings" method="post">
-            <label for="orcidInput" class="sr-only">ORCID Identifier</label>
             <input type="text" 
                    id="orcidInput" 
                    name="orcidInput" 
