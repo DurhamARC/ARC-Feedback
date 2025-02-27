@@ -26,7 +26,7 @@ class OrcidApp(BaseFlaskApp):
         self.app.route('/api/token', methods=['GET', 'POST'])(self.get_access_token)
         self.app.route('/process/publications', methods=['POST'])(self.process_works_form)
         self.app.route('/process/fundings', methods=['POST'])(self.process_fundings_form)
-        self.app.secret_key = "ARC-DURHAM-UNIVERSITY-2025" # Secret key used for flask methods such as "flash()"
+        self.app.secret_key = os.getenv("APP_SECRET_KEY")
 
     def home(self):
         return render_template("home.html")
