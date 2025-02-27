@@ -1,8 +1,12 @@
 from flask import Flask, redirect, render_template, request, jsonify, current_app, flash
-import requests
 import xml.etree.ElementTree as ET
+from dotenv import load_dotenv
 import pandas as pd
+import requests
 import re
+import os
+
+load_dotenv()
 
 class BaseFlaskApp:
     def __init__(self, app_name):
@@ -33,14 +37,13 @@ class OrcidApp(BaseFlaskApp):
     def orcid_fundings_search(self):
         return render_template("orcid_id_fundings.html")
 
-    # NEW HELPER METHOD
     def _fetch_orcid_token(self):
         """Fetches ORCiD access token using client credentials."""
         url = "https://orcid.org/oauth/token"
         headers = {"Accept": "application/json"}
         data = {
-            "client_id": "APP-P45XX0Q5RRZY08DC",  # Will move to .env later
-            "client_secret": "9e402b3a-6989-4447-8dcc-71e14c535e2a",
+            "client_id": os.getenv("ORCID_CLIENT_ID"),
+            "client_secret": os.getenv("ORCID_CLIENT_SECRET"),
             "grant_type": "client_credentials",
             "scope": "/read-public"
         }
@@ -53,7 +56,6 @@ class OrcidApp(BaseFlaskApp):
             return None
 
 
-    # UPDATED ROUTE HANDLER
     def get_access_token(self):
         """Route handler for /api/token (returns JSON token)."""
         token = self._fetch_orcid_token()
@@ -68,7 +70,6 @@ class OrcidApp(BaseFlaskApp):
             return re.match(pattern, orcid_id.strip()) is not None
             
     def get_orcid_works_data(self):
-        # Fetch token dynamically
         access_token = self._fetch_orcid_token()
         if not access_token:
             return jsonify({"error": "Token failure"}), 500
@@ -89,7 +90,7 @@ class OrcidApp(BaseFlaskApp):
 
         response = requests.get(url, headers=headers)
 
-        # Check if the request was successful (status code 200)
+        # status code 200
         if response.status_code == 200:
             # Save the XML response to a file
             file_path = 'works_response_data.xml'
