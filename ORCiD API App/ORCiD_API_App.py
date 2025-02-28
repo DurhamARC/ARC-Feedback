@@ -73,7 +73,7 @@ class OrcidApp(BaseFlaskApp):
         access_token = self._fetch_orcid_token()
         if not access_token:
             return jsonify({"error": "Token failure"}), 500
-
+        
         if request.method == 'POST':
             orcid_id = request.form.get('orcidInput')
             if not self._validate_orcid_id(orcid_id):
@@ -110,11 +110,14 @@ class OrcidApp(BaseFlaskApp):
 
             root = ET.fromstring(xml_data)
 
-            # Extract the titles from the XML
+            # Extract the titles
             titles = [title.text for title in root.findall('.//common:title', namespaces)]
 
+            # filter titles and insert them into a list
+            unique_titles = list(set(titles))
+
             # Pass the titles to the template
-            return render_template('works_results.html', titles=titles)
+            return render_template('works_results.html', unique_titles=unique_titles)
         else:
             # Error message if the request is not successful
             current_app.logger.info(f'Error: {response.status_code} - {response.text}')
@@ -173,8 +176,11 @@ class OrcidApp(BaseFlaskApp):
 
     def process_works_form(self):
         selected_titles = request.form.getlist('selected_titles')
-        username = request.form.getlist('username')  
-
+        username = request.form.get('username')
+        if not re.match(r'^[A-Za-z ]{2,50}$', username):
+            flash('Invalid name format', 'error')
+            return redirect(url_for('orcid_works_search'))
+        
         # Create a DataFrame with the selected titles and ORCiD
         df = pd.DataFrame({
             'Selected Titles': selected_titles,
