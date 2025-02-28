@@ -15,10 +15,15 @@
         }
 
         .navbar-brand {
+            cursor: default;
             color: #68246D !important;
             font-weight: 600;
             font-size: 1.25rem;
             margin-left: 1.5rem;
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
         }
 
         .navbar-nav {
@@ -63,7 +68,7 @@
 
     <nav class="navbar navbar-expand-lg navbar-light">
         <div class="container-fluid">
-            <a class="navbar-brand" href="">ORCiD Search</a>
+            <span class="navbar-brand">ORCiD Search</span>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" 
                     data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" 
                     aria-expanded="false" aria-label="Toggle navigation">
