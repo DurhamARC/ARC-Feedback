@@ -25,7 +25,8 @@
                    required pattern="[A-Za-z ]{2,50}"
                    title="Please enter your full name (letters and spaces only)">
         </div>
-
+        <div class="div">
+        </div>
         <div class="instructions">
             <p>Please select all publications you've worked on using our ARC infrastructure:</p>
         </div>
@@ -58,8 +59,9 @@
     }
 
     .page-title {
-        color: #2c3e50;
+        color: #68246D;
         margin-bottom: 1.5rem;
+        padding: 10px
     }
 
     .form-input {
@@ -69,15 +71,18 @@
         width: 100%;
         max-width: 300px;
     }
-
+    div {
+        padding: 10px
+    }
     .selection-list {
         max-height: 60vh;
         overflow-y: auto;
         margin: 1rem 0;
         border: 1px solid #ecf0f1;
-        padding: 1rem;
+        padding: 0.5rem;
+        color:#68246D
     }
-
+    
     .form-check {
         margin: 0.5rem 0;
         padding: 0.5rem;
@@ -109,14 +114,25 @@
     }
 
     .btn-primary {
-        background: #3498db;
+        background: #68246D;
         color: white;
     }
 
+    .btn-primary:hover {
+        background: #99599f;
+        transform: translateY(-2px);
+    }   
+
     .btn-select-all {
-        background: #2ecc71;
+        background: #6da0ff;
         color: white;
     }
+
+    .btn-select-all:hover {
+        background: #a6beff;
+        color: white;
+        transform: translateY(-2px);
+    }   
 
     .alert {
         padding: 0.75rem;
