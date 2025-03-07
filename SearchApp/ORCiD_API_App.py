@@ -1,16 +1,46 @@
 from flask import Flask, redirect, render_template, request, jsonify, current_app, flash, url_for
+from flask_sqlalchemy import SQLAlchemy
 import xml.etree.ElementTree as ET
 from dotenv import load_dotenv
-import pandas as pd
+from datetime import datetime, timezone
+from sqlalchemy import Enum
+from zoneinfo import ZoneInfo
 import requests
 import re
 import os
 
+import pandas as pd
+
+
 load_dotenv()
+db = SQLAlchemy()
+utc_now = datetime.now(timezone.utc)
+uk_time = utc_now.astimezone(ZoneInfo("Europe/London"))
+
+class Record(db.Model):
+    __tablename__ = 'records'
+    id = db.Column(db.Integer, primary_key=True)
+    orcid = db.Column(db.String(19), nullable=False)
+    name = db.Column(db.String(100), nullable=False)
+    title = db.Column(db.String(500), nullable=False)
+    type = db.Column(Enum('publication', 'funding', name='record_type'), nullable=False)
+    created_at = db.Column(db.DateTime, default=uk_time, nullable=False)
+
+def init_db(app):
+    def wrapper():
+        with app.app_context():
+            db.create_all()
+    return wrapper
 
 class BaseFlaskApp:
     def __init__(self, app_name):
         self.app = Flask(app_name)
+        self.app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
+        self.app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+        db.init_app(self.app)
+        self._register_cli_commands()
+    def _register_cli_commands(self):
+        self.app.cli.command()(init_db(self.app))
 
     def run(self, *args, **kwargs):
         self.app.run(*args, **kwargs)
@@ -173,39 +203,57 @@ class OrcidApp(BaseFlaskApp):
     def process_works_form(self):
         selected_titles = request.form.getlist('selected_titles')
         username = request.form.get('username')
+        
         if not re.match(r'^[A-Za-z ]{2,50}$', username):
             flash('Invalid name format', 'error')
             return redirect(url_for('orcid_works_search'))
-        
-        # Create a DataFrame with the selected titles and ORCiD
-        df = pd.DataFrame({
-            'Selected Titles': selected_titles,
-            'ORCiD': [username] * len(selected_titles)
-        })
-
-        # Specify the Excel file path
-        excel_file_path = 'publications_and_fundings.xlsx'
 
         try:
-            # Load the existing Excel file
-            existing_df = pd.read_excel(excel_file_path)
+            with self.app.app_context():
+                for title in selected_titles:
+                    record = Record(
+                        orcid=request.form.get('orcidInput'),
+                        name=username,
+                        title=title,
+                        type='publication'
+                    )
+                    db.session.add(record)
+                db.session.commit()
+            flash('Publications saved successfully', 'success')
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(f"Database error: {str(e)}")
+            flash('Error saving publications', 'error')
+        
+        return redirect('/')
 
-            # Append the new data to the existing DataFrame
-            updated_df = pd.concat([existing_df, df], ignore_index=True)
 
-            # Write the updated DataFrame to the Excel file
-            with pd.ExcelWriter(excel_file_path, engine="openpyxl", mode="a", if_sheet_exists="overlay") as writer:
-                updated_df.to_excel(writer, sheet_name= 'Works', index=False)
+    def process_fundings_form(self):
+        selected_titles = request.form.getlist('selected_titles')
+        username = request.form.get('username')
 
-            # Additional processing logic possible here 
+        if not re.match(r'^[A-Za-z ]{2,50}$', username):
+            flash('Invalid name format', 'error')
+            return redirect(url_for('orcid_fundings_search'))
 
-            return redirect('/')  # Redirect back to the form page or any other page
-
-        except FileNotFoundError:
-            # If the file doesn't exist, write the DataFrame as a new file
-            df.to_excel(excel_file_path, index=False)
-            return redirect('/')  # Redirect back to the form page or any other page
-            pass
+        try:
+            with self.app.app_context():
+                for title in selected_titles:
+                    record = Record(
+                        orcid=request.form.get('orcidInput'),
+                        name=username,
+                        title=title,
+                        type='funding'
+                    )
+                    db.session.add(record)
+                db.session.commit()
+            flash('Fundings saved successfully', 'success')
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(f"Database error: {str(e)}")
+            flash('Error saving fundings', 'error')
+        
+        return redirect('/')
     
     def process_fundings_form(self):
         selected_titles = request.form.getlist('selected_titles')
@@ -241,6 +289,7 @@ class OrcidApp(BaseFlaskApp):
             return redirect('/')  # Redirect back to the form page or any other page
             pass
 
+orcid_app = OrcidApp(__name__)
+
 if __name__ == "__main__":
-    orcid_app = OrcidApp(__name__)
     orcid_app.run(host="0.0.0.0", port=5000)

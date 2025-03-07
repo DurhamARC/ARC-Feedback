@@ -4,22 +4,49 @@ services:
     environment:
       POSTGRES_PASSWORD: ${DB_PASS}
       POSTGRES_USER: ${DB_USER}
-      PGUSER: ${DB_USER}
+      POSTGRES_DB: ${DB_NAME}
     networks:
       - backend
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
   searchapp:
-    build:
-      context: .
-      tags:
-        - searchapp:latest
+    build: .
+    environment:
+      FLASK_APP: wsgi.py
+      FLASK_DEBUG: 0
+      DATABASE_URL: postgresql://${DB_USER}:${DB_PASS}@postgres:5432/${DB_NAME}
     env_file:
       - .env
-    ports: 
-      - "5000:5000/tcp"
+    ports:
+      - "5000:5000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./migrations:/app/migrations
+    command: >
+      sh -c "flask db upgrade && flask run --host=0.0.0.0"
+
+  pgadmin:
+    image: dpage/pgadmin4
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@example.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "8080:80"
+    depends_on:
+      - postgres
     networks:
       - backend
-      - default
 
 networks:
   backend:
-  default:
+
+volumes:
+  postgres_data:
