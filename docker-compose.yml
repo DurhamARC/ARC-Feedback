@@ -1,0 +1,25 @@
+services:
+  postgres:
+    image: postgres:17.4
+    environment:
+      POSTGRES_PASSWORD: ${DB_PASS}
+      POSTGRES_USER: ${DB_USER}
+      PGUSER: ${DB_USER}
+    networks:
+      - backend
+  searchapp:
+    build:
+      context: .
+      tags:
+        - searchapp:latest
+    env_file:
+      - .env
+    ports: 
+      - "5000:5000/tcp"
+    networks:
+      - backend
+      - default
+
+networks:
+  backend:
+  default:

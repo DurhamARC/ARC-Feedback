@@ -12,8 +12,8 @@ class BaseFlaskApp:
     def __init__(self, app_name):
         self.app = Flask(app_name)
 
-    def run(self):
-        self.app.run(debug=True)
+    def run(self, *args, **kwargs):
+        self.app.run(*args, **kwargs)
 
 class OrcidApp(BaseFlaskApp):
     def __init__(self, app_name):
@@ -243,4 +243,4 @@ class OrcidApp(BaseFlaskApp):
 
 if __name__ == "__main__":
     orcid_app = OrcidApp(__name__)
-    orcid_app.run()
+    orcid_app.run(host="0.0.0.0", port=5000)
