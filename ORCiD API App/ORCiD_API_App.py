@@ -92,14 +92,11 @@ class OrcidApp(BaseFlaskApp):
 
         # status code 200
         if response.status_code == 200:
-            # Save the XML response to a file
-            file_path = 'works_response_data.xml'
-            with open(file_path, 'w') as file:
-                file.write(response.text)
-
-            # Parse the XML data
-            with open(file_path, 'r') as file:
-                xml_data = file.read()
+            # Debugging purpose
+            if self.app.debug:
+                file_path = 'works_response_data.xml'
+                with open(file_path, 'w') as file:
+                    file.write(response.text)
 
             # Define XML namespaces
             namespaces = {
@@ -108,7 +105,7 @@ class OrcidApp(BaseFlaskApp):
             'work': 'http://www.orcid.org/ns/work',
             }
 
-            root = ET.fromstring(xml_data)
+            root = ET.fromstring(response.text)
 
             # Extract the titles
             titles = [title.text for title in root.findall('.//common:title', namespaces)]
@@ -135,9 +132,9 @@ class OrcidApp(BaseFlaskApp):
             if not self._validate_orcid_id(orcid_id):
                 flash("Invalid ORCiD. Use the XXXX-XXXX-XXXX-XXXX format.")
                 return redirect(request.referrer)
-            url = f'https://pub.orcid.org/v3.0/{orcid_id}/works'
+            url = f'https://pub.orcid.org/v3.0/{orcid_id}/fundings'
         else:
-            url = 'https://pub.orcid.org/v3.0/{ORCID_ID}/works'
+            url = 'https://pub.orcid.org/v3.0/{ORCID_ID}/fundings'
 
         headers = {
             'Content-type': 'application/vnd.orcid+xml',
@@ -148,13 +145,12 @@ class OrcidApp(BaseFlaskApp):
         response = requests.get(url, headers=headers)
 
         if response.status_code == 200:
-            file_path = 'fundings_response_data.xml'
-            with open(file_path, 'w') as file:
-                file.write(response.text)
 
-            # Parse XML
-            with open(file_path, 'r') as file:
-                xml_data = file.read()
+            # Debugging purpose
+            if self.app.debug:
+                file_path = 'fundings_response_data.xml'
+                with open(file_path, 'w') as file:
+                    file.write(response.text)
 
             namespaces = {
                 'activities': 'http://www.orcid.org/ns/activities',
@@ -162,7 +158,7 @@ class OrcidApp(BaseFlaskApp):
                 'work': 'http://www.orcid.org/ns/work',
             }
 
-            root = ET.fromstring(xml_data)
+            root = ET.fromstring(response.text)
 
             # Extract titles
             titles = [title.text for title in root.findall('.//common:title', namespaces)]
