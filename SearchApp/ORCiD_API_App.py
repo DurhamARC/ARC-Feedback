@@ -5,11 +5,10 @@ from dotenv import load_dotenv
 from datetime import datetime, timezone
 from sqlalchemy import Enum
 from zoneinfo import ZoneInfo
+import pandas as pd
 import requests
 import re
 import os
-
-import pandas as pd
 
 
 load_dotenv()
@@ -39,11 +38,18 @@ class BaseFlaskApp:
         self.app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
         db.init_app(self.app)
         self._register_cli_commands()
+
     def _register_cli_commands(self):
-        self.app.cli.command()(init_db(self.app))
+        @self.app.cli.command("init-db")
+        def init_db_command():
+            """Initialize the database."""
+            with self.app.app_context():
+                db.create_all()
+            print("Database initialized")
 
     def run(self, *args, **kwargs):
         self.app.run(*args, **kwargs)
+
 
 class OrcidApp(BaseFlaskApp):
     def __init__(self, app_name):
@@ -144,7 +150,7 @@ class OrcidApp(BaseFlaskApp):
             unique_titles = list(set(titles))
 
             # Pass the titles to the template
-            return render_template('works_results.html', unique_titles=unique_titles)
+            return render_template('works_results.html', unique_titles=unique_titles, orcidInput=orcid_id)
         else:
             # Error message if the request is not successful
             current_app.logger.info(f'Error: {response.status_code} - {response.text}')
@@ -203,7 +209,9 @@ class OrcidApp(BaseFlaskApp):
     def process_works_form(self):
         selected_titles = request.form.getlist('selected_titles')
         username = request.form.get('username')
-        
+        current_app.logger.info(request.form)
+
+
         if not re.match(r'^[A-Za-z ]{2,50}$', username):
             flash('Invalid name format', 'error')
             return redirect(url_for('orcid_works_search'))
@@ -250,7 +258,7 @@ class OrcidApp(BaseFlaskApp):
             flash('Fundings saved successfully', 'success')
         except Exception as e:
             db.session.rollback()
-            current_app.logger.error(f"Database error: {str(e)}")
+            self.logger.error(f"Database error: {str(e)}")
             flash('Error saving fundings', 'error')
         
         return redirect('/')
