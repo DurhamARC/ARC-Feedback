@@ -19,7 +19,6 @@ services:
 
 
 
-
   searchapp:
     build: .
     environment:
@@ -45,9 +44,6 @@ services:
       "
     networks:
       - backend
-
-
-
 
 
 

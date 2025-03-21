@@ -1,7 +1,5 @@
 FROM python:3.13.2-slim-bookworm
 
-LABEL keep=true
-
 # Set environment variables
 ENV FLASK_APP=ORCiD_API_App.py
 ENV FLASK_ENV=production

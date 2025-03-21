@@ -19,11 +19,19 @@ uk_time = utc_now.astimezone(ZoneInfo("Europe/London"))
 class Record(db.Model):
     __tablename__ = 'records'
     id = db.Column(db.Integer, primary_key=True)
-    orcid = db.Column(db.String(19), nullable=False)
-    name = db.Column(db.String(100), nullable=False)
+    orcid = db.Column(db.String(19), db.ForeignKey('users.orcid'), nullable=False) 
     title = db.Column(db.String(500), nullable=False)
-    type = db.Column(Enum('publication', 'funding', name='record_type'), nullable=False)
+    type = db.Column(db.Enum('publication', 'funding', name='record_type'), nullable=False)
     created_at = db.Column(db.DateTime, default=uk_time, nullable=False)
+
+class User(db.Model):
+    __tablename__ = 'users'
+    id = db.Column(db.Integer, primary_key=True)
+    orcid = db.Column(db.String(19), nullable=False, unique=True)
+    name = db.Column(db.String(100), nullable=False)
+    created_at = db.Column(db.DateTime, default=uk_time, nullable=False)
+
+    records = db.relationship('Record', backref='users', lazy=True)
 
 def init_db(app):
     def wrapper():
@@ -206,11 +214,15 @@ class OrcidApp(BaseFlaskApp):
             current_app.logger.info(f'Error: {response.status_code} - {response.text}')
             return jsonify({"error": f"{response.status_code} - {response.text}"}), response.status_code
 
+
+
     def process_works_form(self):
+
         selected_titles = request.form.getlist('selected_titles')
         username = request.form.get('username')
-        current_app.logger.info(request.form)
+        orcid_input = request.form.get("orcidInput")
 
+        current_app.logger.info(request.form)
 
         if not re.match(r'^[A-Za-z ]{2,50}$', username):
             flash('Invalid name format', 'error')
@@ -219,21 +231,32 @@ class OrcidApp(BaseFlaskApp):
         try:
             with self.app.app_context():
                 for title in selected_titles:
+                    users = User.query.filter_by(orcid=orcid_input).first()
+                    if not users:
+                        users = User(
+                            orcid=orcid_input,
+                            name=username
+                        )
+                        db.session.add(users)
+                        db.session.commit()
+                    
                     record = Record(
-                        orcid=request.form.get('orcidInput'),
-                        name=username,
                         title=title,
-                        type='publication'
+                        type='publication',
+                        orcid=orcid_input,
+                        users=users
                     )
+                    
                     db.session.add(record)
+
                 db.session.commit()
-            flash('Publications saved successfully', 'success')
         except Exception as e:
             db.session.rollback()
             current_app.logger.error(f"Database error: {str(e)}")
-            flash('Error saving publications', 'error')
-        
+
         return redirect('/')
+
+
 
 
     def process_fundings_form(self):
