@@ -2,93 +2,11 @@
 {% block title %}Search ORCiD Publications{% endblock %}
 {% set page = 'publications' %}
 {% block content %}
-<style>
-    .publications-container {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        min-height: 80vh;
-        padding: 2rem;
-    }
-    
-    .search-card {
-        background: white;
-        padding: 2.5rem;
-        border-radius: 25px;
-        box-shadow: 0 4px 20px rgba(104, 36, 109, 0.08), 
-                    0 12px 40px rgba(104, 36, 109, 0.12);
-        width: 90%;
-        max-width: 400px;
-        text-align: center;
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
-        user-select: none;
-        -webkit-user-select: none;
-        -moz-user-select: none;
-        -ms-user-select: none;
-    }
 
-    .search-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 25px rgba(104, 36, 109, 0.1), 
-                    0 15px 45px rgba(104, 36, 109, 0.15);
-    }
-    
-    .search-card form {
-        display: flex;
-        flex-direction: column;
-        gap: 1.2rem;
-    }
-    
-    #orcidInput {
-        padding: 12px 20px;
-        border: 2px solid #e0e0e0;
-        border-radius: 15px;
-        font-size: 16px;
-        transition: all 0.3s ease;
-        user-select: text;
-        -webkit-user-select: text;
-        -moz-user-select: text;
-        -ms-user-select: text;
-    }
-    
-    #orcidInput:focus {
-        border-color: #68246D;
-        outline: none;
-        box-shadow: 0 0 8px rgb(190, 190, 190);
-    }
-    
-    button[type="submit"] {
-        background: #68246D;
-        color: white;
-        padding: 12px 25px;
-        border: none;
-        border-radius: 15px;
-        font-size: 16px;
-        cursor: pointer;
-        transition: all 0.3s ease;
-    }
-    
-    button[type="submit"]:hover {
-        background: #99599f;
-        transform: translateY(-2px);
-    }
-    
-    .error {
-        background: #ffe6e6;
-        color: #cc0000;
-        padding: 1rem;
-        border-radius: 10px;
-        margin-bottom: 1.5rem;
-        width: 100%;
-        max-width: 400px;
-    }
-</style>
-
-<div class="publications-container">
+<div class="page-container">
     {% with messages = get_flashed_messages() %}
         {% if messages %}
-            <div class="error">
+            <div class="error-message" aria-live="polite">
                 {% for message in messages %}
                     <p>{{ message }}</p>
                 {% endfor %}
@@ -96,35 +14,24 @@
         {% endif %}
     {% endwith %}
 
-    <div class="search-card">
-        <h1 style="color: #333; 
-        margin-bottom: 1rem;
-        font-size: 2.5rem;
-        font-weight: 700;
-        letter-spacing: -0.5px;">
-        ORCiD Publications
-        </h1>
+    <div class="card">
+        <h1>ORCiD Publications</h1>
 
-        <p style="color: #636363;
-            margin-bottom: 2.5rem;
-            font-size: 0.9rem;
-            line-height: 1.6;
-            max-width: 320px;
-            margin-left: auto;
-            margin-right: auto;">
-        Enter your ORCiD identifier below to search for publications
+        <p class="text-center">
+            Enter your ORCiD identifier below to search for publications
         </p>
         
-        <form action="/publications" method="post">
-            <input type="text" 
-                   id="orcidInput" 
-                   name="orcidInput" 
-                   placeholder="0000-0001-2345-678X" 
-                   pattern="\d{4}-\d{4}-\d{4}-\d{3}[\dX]" 
-                   title="ORCiD format: 0000-0000-0000-0000" 
-                   required>
-            <button type="submit">Search Publications</button>
-        </form>
+        <div class="mt-4">
+            <a href="/auth/orcid" class="button button-secondary" aria-label="Sign in with ORCID">
+                <img src="https://orcid.org/sites/default/files/images/orcid_24x24.png"
+                     alt="ORCID logo"
+                     class="me-2">
+                Sign in with ORCID
+            </a>
+            <p class="text-center mt-3">
+                You'll be redirected to ORCID to authenticate
+            </p>
+        </div>
     </div>
 </div>
 {% endblock %}

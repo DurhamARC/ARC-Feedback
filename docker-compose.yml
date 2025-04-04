@@ -33,14 +33,14 @@ services:
       postgres:
         condition: service_healthy
     volumes:
-      - ./migrations:/migrations
+      - /home/tfhw53/Documents/ARC-Feedback/SearchApp/migrations:/app/SearchApp/migrations
     command: >
       sh -c "
-        # until PGPASSWORD=$${DB_PASS} pg_isready -h postgres -U $${DB_USER} -d $${DB_NAME} >/dev/null 2>&1; do
-        #   echo 'Waiting for database...';
-        #   sleep 2;
-        # done;
-        flask db upgrade && flask run --host=0.0.0.0
+        until PGPASSWORD=$${DB_PASS} pg_isready -h postgres -U $${DB_USER} -d $${DB_NAME} >/dev/null 2>&1; do
+          echo 'Waiting for database...';
+          sleep 2;
+        done;
+        flask db init && flask db migrate && flask db upgrade && flask run --host=0.0.0.0
       "
     networks:
       - backend
