@@ -1,19 +1,126 @@
-# Starter pipeline
-# Start with a minimal pipeline that you can customize to build and deploy your code.
-# Add steps that build, run tests, deploy, and more:
-# https://aka.ms/yaml
+# Pipeline to build and release the ARC feedback application
 
-trigger:
-- main
+pr: none
 
 pool:
-  vmImage: ubuntu-latest
+# we need an agent which has Docker installed
+ name: Default
+ demands:
+ - Agent.Name -equals vmlsha1
 
-steps:
-- script: echo Hello, world!
-  displayName: 'Run a one-line script'
+resources:
+- repo: self
 
-- script: |
-    echo Add other tasks to build, test, and deploy your project.
-    echo See https://aka.ms/yaml
-  displayName: 'Run a multi-line script'
+variables:
+  - group: arc-feedback
+
+  # Azure container registry connection details
+  - name: azureSubscription
+    value: 'svc-con-awh-01'
+  - name: dockerRegistryServiceConnection 
+    value: 'duuksawhacr01'
+  - name: dockerRegistryServerURL
+    value: 'duuksawhacr01.azurecr.io'
+
+  # Docker Image Names (under arc/ namespace)
+  - name: dockerNamespace
+    value: 'arc'
+  - name: image
+    value: 'arc-feedback'
+  - name: tag
+    value: 'latest'
+
+  # Azure App Service app name
+  - name: appName
+    value: 'duuksawh-arc-feedback01'
+
+  # Dockerfiles to build
+  - name: dockerfilePath
+    value: 'Dockerfile.production'
+
+
+jobs:
+  - job: build
+    displayName: Build ARC Feedback Application
+
+    steps:
+      - task: Docker@2
+        displayName: Login to ACR
+        inputs:
+          command: 'login'
+          containerRegistry: '$(dockerRegistryServiceConnection)'
+
+      # Set commit hash variables: these will be used to tag docker images
+      # Then, pull existing layers from the docker container registry server, to use as build cache
+      - script: |
+          pwd && ls -lA
+          echo "##vso[task.setvariable variable=commitHash;]`git rev-parse --short HEAD`"
+          docker pull $(dockerRegistryServerURL)/$(dockerNamespace)/$(image):latest
+        displayName: Pull latest for layer caching
+        continueOnError: true # for first build, no cache
+
+      # Build the CDCS container (main database server)
+      - task: Docker@2
+        displayName: "Build image"
+        inputs:
+          command: 'build'
+          repository: "$(dockerNamespace)/$(image)"
+          dockerfile: "$(dockerfilePath)"
+          containerRegistry: "$(dockerRegistryServiceConnection)"
+          arguments: |
+            --cache-from=$(dockerRegistryServerURL)/$(dockerNamespace)/$(image-cdcs):latest
+          tags: |
+            $(tag)
+            $(commitHash)
+
+      - task: Docker@2
+        displayName: "Push image"
+        inputs:
+          command: push
+          containerRegistry: "$(dockerRegistryServiceConnection)"
+          repository: "$(dockerNamespace)/$(image)"
+          tags: |
+            $(tag)
+            $(commitHash)
+
+
+  - job: release
+    dependsOn: build
+    displayName: Release app to Azure App Service Environment
+    steps:
+
+      #https://learn.microsoft.com/en-us/azure/devops/pipelines/tasks/reference/azure-rm-web-app-deployment-v5
+      # Front
+      - task: AzureRmWebAppDeployment@5
+        displayName: Deploy ARC Feedback Application
+        inputs:
+          appType: 'webAppContainer'
+          deployToSlotOrASE: true
+          azureSubscription: '$(azureSubscription)'
+          ResourceGroupName: '$(appResourceGroupName)'
+          WebAppName: '$(appName)'
+          DockerNamespace: '$(dockerRegistryServerURL)'
+          DockerRepository: '$(dockerNamespace)/$(image)'
+          DockerImageTag: $(tag)
+          appSettings: >-
+            -DOCKER_REGISTRY_SERVER_URL "https://$(dockerRegistryServerURL)"
+            -DOCKER_REGISTRY_SERVER_USERNAME "$(DOCKER_REGISTRY_SERVER_USERNAME)"
+            -DOCKER_REGISTRY_SERVER_PASSWORD "$(DOCKER_REGISTRY_SERVER_PASSWORD)"
+            -WEBSITES_PORT "8080"
+            -ORCID_CLIENT_ID="$(ORCID_CLIENT_ID)"
+            -ORCID_CLIENT_SECRET="$(ORCID_CLIENT_SECRET)"
+            -APP_SECRET_KEY="$(APP_SECRET_KEY)"
+            -DB_USER="$(DB_USER)"
+            -DB_PASS="$(DB_PASS)"
+            -DB_NAME="$(DB_NAME)"
+            -POSTGRES_HOST="$(POSTGRES_HOST)"
+            -POSTGRES_PORT="$(POSTGRES_PORT)"
+            -DATABASE_URL="$(DATABASE_URL)"
+            -ORCID_REDIRECT_URI="$(ORCID_REDIRECT_URI)"
+
+      - task: AzureAppServiceManage@0
+        displayName: Restart App Service
+        inputs:
+          azureSubscription: 'svc-con-awh-01'
+          Action: 'Restart Azure App Service'
+          WebAppName: $(appName)
