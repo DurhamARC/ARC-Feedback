@@ -31,7 +31,7 @@ COPY conf/init.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/init.sh
 
 # Copy application files
-COPY . .
+COPY SearchApp ./SearchApp
 
 # Create necessary directories and set permissions
 RUN mkdir -p instance && \

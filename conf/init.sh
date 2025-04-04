@@ -13,7 +13,6 @@ service nginx start
 
 cd /app/SearchApp
 
-# Add `--access-logfile '-' --log-level=debug` for debugging
+# Add `--access-logfile '-' --log-level=debug \` for debugging
 gunicorn --workers 2 --timeout=20 \
-         --access-logfile '-' --log-level=debug \
          --log-file=- --bind=127.0.0.1:5000 wsgi:app
