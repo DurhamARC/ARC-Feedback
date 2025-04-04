@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% block title %}Home Page{% endblock %}
+{% set page = 'home' %}
+{% block content %}
+
+<style>
+    .home-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 80vh;
+        padding: 2rem;
+    }
+    
+    .card-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 2rem;
+        max-width: 800px;
+        width: 100%;
+        margin-top: 2rem;
+    }
+    
+    .feature-card {
+        background: white;
+        padding: 2rem;
+        border-radius: 25px;
+        box-shadow: 0 4px 20px rgba(104, 36, 109, 0.08);
+        text-align: center;
+        transition: all 0.3s ease;
+    }
+    
+    .feature-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(104, 36, 109, 0.12);
+    }
+    
+    .feature-button {
+        background: #68246D;
+        color: white;
+        padding: 12px 30px;
+        border: none;
+        border-radius: 15px;
+        font-size: 16px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        width: 100%;
+        margin-top: 1.5rem;
+    }
+    
+    .feature-button:hover {
+        background: #99599f;
+        transform: translateY(-2px);
+    }
+    
+    .feature-button:disabled {
+        background: #e0e0e0;
+        color: #a0a0a0;
+        cursor: not-allowed;
+    }
+    
+    .welcome-message {
+        text-align: center;
+        max-width: 600px;
+        margin-bottom: 0.5rem;
+    }
+    
+    h1 {
+        color: #68246D;
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+    }
+    
+    p.lead {
+        color: #636363;
+        font-size: 1.1rem;
+        line-height: 1.6;
+    }
+</style>
+
+<div class="home-container">
+    <div class="welcome-message">
+        <h1>Welcome to ORCiD Search</h1>
+        <p class="lead">Explore research outputs and funding information linked through ORCiD identifiers. Get started by selecting a category below.</p>
+    </div>
+    
+    <div class="card-grid">
+        <div class="feature-card">
+            <h2>Publications</h2>
+            <p>Search academic publications using ORCID ID</p>
+            <a href='/publications/search' class="feature-button">
+                Browse Publications
+            </a>
+        </div>
+        
+        <div class="feature-card">
+            <h2>Fundings</h2>
+            <p>Explore research funding information (Coming Soon)</p>
+            <button class="feature-button" disabled>
+                Browse Fundings
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="welcome-message">
+    <h1>Durham University Research Finder</h1>
+    <p class="lead">The purpose of this app is to help speed up the process of keeping the ARC team up to date with your current research.</p>
+    <p class="lead">Follow the link to the relevant page, either publications or funding.</p> 
+    <p class="lead">From there you will be asked to enter your ORCiD, the app will then return items from your record to you in the form of a checkbox list.</p>
+    <p class="lead">Simply check all the Publications or Fundings that currently applies and click the submit button.</p>
+    <p class="lead">This data is then stored for the ARC team to keep track of.</p>
+</div>
+
+{% endblock %}
