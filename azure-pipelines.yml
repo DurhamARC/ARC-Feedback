@@ -33,6 +33,8 @@ variables:
   # Azure App Service app name
   - name: appName
     value: 'duuksawh-arc-feedback01'
+  - name: appResourceGroupName
+    value: 'duuksawh-arc-feedback'
 
   # Dockerfiles to build
   - name: dockerfilePath
