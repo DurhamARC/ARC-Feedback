@@ -31,9 +31,10 @@
                    pattern="^\d{4}-\d{4}-\d{4}-\d{3}[\dX]$"
                    title="ORCiD format: 0000-0000-0000-0000 (last digit can be X)"
                    required
-                   aria-label="ORCID identifier">
+                   aria-label="ORCID identifier"
+                   {% if debug_mode %}autocomplete="off"{% endif %}>
             <button type="submit" class="button" onclick="this.classList.add('loading')">
-                <span class="button-text">Search Fundings</span>
+                <span class="button-text">Proceed</span>
             </button>
         </form>
     </div>
