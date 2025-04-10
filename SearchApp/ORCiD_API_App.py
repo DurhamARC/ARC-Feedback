@@ -115,8 +115,6 @@ class OrcidApp(BaseFlaskApp):
         self.app.config['CACHE_DEFAULT_TIMEOUT'] = 3600  # 1 hour cache
         self._cache = Cache(self.app)
         self.app.secret_key = os.getenv("APP_SECRET_KEY")
-
-        # Register routes after all components are initialized
         self._register_routes()
 
     def _register_routes(self):
@@ -142,7 +140,7 @@ class OrcidApp(BaseFlaskApp):
     @handle_errors
     def orcid_works_search(self):
         try:
-            return render_template("orcid_id_works.html")
+            return render_template("orcid_id_works.html", enable_orcid_login=os.getenv('ENABLE_ORCID_LOGIN', 'true').lower() in ('true'), debug_mode=current_app.debug)
         except Exception as e:
             current_app.logger.error(f"Template rendering failed: {str(e)}")
             abort(500)
@@ -150,7 +148,7 @@ class OrcidApp(BaseFlaskApp):
     @handle_errors
     def orcid_fundings_search(self):
         try:
-            return render_template("orcid_id_fundings.html")
+            return render_template("orcid_id_fundings.html", debug_mode=current_app.debug)
         except Exception as e:
             current_app.logger.error(f"Template rendering failed: {str(e)}")
             abort(500)
@@ -261,9 +259,7 @@ class OrcidApp(BaseFlaskApp):
 
             # Pass the titles to the template
             self._cache.set(cache_key, unique_titles, timeout=120)  # Cache for 2 minutes / 1 day in production
-            return render_template('works_results.html',
-                                unique_titles=unique_titles,
-                                orcidInput=orcid_id)
+            return render_template('works_results.html', unique_titles=unique_titles, orcidInput=orcid_id)
         else:
             # Error message if the request is not successful
             current_app.logger.info(f'Error: {response.status_code} - {response.text}')
@@ -320,11 +316,13 @@ class OrcidApp(BaseFlaskApp):
 
             # Extract titles
             titles = [title.text for title in root.findall('.//common:title', namespaces)]
-
+            unique_titles = list(set(titles))
+            
             # Return the same template
-            self._cache.set(cache_key, titles, timeout=120)  # Cache for 2 minutes
+            self._cache.set(cache_key, unique_titles, timeout=120)  # Cache for 2 minutes
             return render_template('fundings_results.html',
-                                titles=titles)
+                                    unique_titles=unique_titles,
+                                    orcidInput=orcid_id)
         else:
             # Handle errors
             current_app.logger.info(f'Error: {response.status_code} - {response.text}')
@@ -383,7 +381,7 @@ class OrcidApp(BaseFlaskApp):
         state = secrets.token_urlsafe(16)
         session['oauth_state'] = state
         
-        # Build authorization URL
+        # Build authorisation URL
         auth_url = (
             "https://orcid.org/oauth/authorize?"
             f"client_id={os.getenv('ORCID_CLIENT_ID')}&"
@@ -397,7 +395,7 @@ class OrcidApp(BaseFlaskApp):
     @handle_errors
     def handle_orcid_callback(self):
         """Handle ORCiD OAuth callback"""
-        # Verify state parameter
+
         if session.get('oauth_state') != request.args.get('state'):
             current_app.logger.error("Invalid state parameter in OAuth callback")
             abort(401)
@@ -480,4 +478,9 @@ class OrcidApp(BaseFlaskApp):
 orcid_app = OrcidApp(__name__)
 
 if __name__ == "__main__":
-    orcid_app.run(host="0.0.0.0", port=5000)
+    orcid_app.run(
+        host="0.0.0.0",
+        port=5000,
+        debug=os.getenv("DEBUG", "false").lower() == "true",
+        extra_files=[".env"]
+    )
