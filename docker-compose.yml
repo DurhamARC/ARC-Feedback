@@ -58,9 +58,12 @@ services:
       - postgres
     networks:
       - backend
+    volumes:
+      - pgvolume:/var/lib/pgadmin
 
 networks:
   backend:
 
 volumes:
   postgres_data:
+  pgvolume:
