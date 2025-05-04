@@ -428,7 +428,7 @@ class OrcidApp(BaseFlaskApp):
             if not titles:
                 flash(f"No funding found for ORCID {orcid_id}.", "info")
             else:
-                normalized = {self.normalise_title(t): t for t in titles}
+                normalized = {normalise_title(t): t for t in titles}
                 unique_titles = list(normalized.values())
 
             self._cache.set(cache_key, {'titles': unique_titles, 'name': name}, timeout=120)
@@ -504,15 +504,13 @@ class OrcidApp(BaseFlaskApp):
 
                 saved_count = 0
                 for title in selected_titles:
-                     existing_record = Record.query.filter_by(orcid=orcid_input, title=title, type='publication').first()
-                     if not existing_record:
-                         record = Record(title=title, type='publication', orcid=orcid_input, users=user)
-                         db.session.add(record)
-                         saved_count += 1
+                    record = Record(title=title, type='publication', orcid=orcid_input, users=user)
+                    db.session.add(record)
+                    saved_count += 1
 
                 if saved_count > 0:
                     db.session.commit()
-                    flash(f'{saved_count} publication(s) saved successfully!', 'fireworks-success')
+                    flash(f'{saved_count} publication(s) saved successfully!', 'success')
                 else:
                     flash('No new publications were selected or saved.', 'info')
 
@@ -639,11 +637,9 @@ class OrcidApp(BaseFlaskApp):
 
                 saved_count = 0
                 for title in selected_titles:
-                    existing_record = Record.query.filter_by(orcid=orcid_input, title=title, type='funding').first()
-                    if not existing_record:
-                        record = Record(title=title, type='funding', orcid=orcid_input, users=user)
-                        db.session.add(record)
-                        saved_count += 1
+                    record = Record(title=title, type='funding', orcid=orcid_input, users=user)
+                    db.session.add(record)
+                    saved_count += 1
 
                 if saved_count > 0:
                     db.session.commit()

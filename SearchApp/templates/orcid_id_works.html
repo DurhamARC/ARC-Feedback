@@ -15,46 +15,53 @@
     {% endwith %}
 
     <div class="card">
-        <h1>ORCiD Publications</h1>
-
-        <p class="text-center" style="animation: fadeIn 0.5s ease-out 0.3s forwards; opacity: 0;">
-            Enter your ORCiD identifier below to search for publications
-        </p>
-        <form action="/publications" method="post" class="form-group">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-            <input type="text"
-                   id="orcidInput"
-                   name="orcidInput"
-                   class="input-field"
-                   placeholder="0000-0001-2345-678X"
-                   pattern="^\d{4}-\d{4}-\d{4}-\d{3}[\dX]$"
-                   title="ORCiD format: 0000-0000-0000-0000 (last digit can be X)"
-                   required
-                   aria-label="ORCID identifier"
-                   {% if debug_mode %}autocomplete="off"{% endif %}>
-            <button type="submit" class="button" onclick="this.classList.add('loading')">
-                <span class="button-text">Proceed</span>
-            </button>
-        </form>
-        {% if enable_orcid_login %}
-        <div class="mt-4" style="animation: fadeIn 0.5s ease-out 0.5s forwards; opacity: 0;">
-            <a href="/auth/orcid" class="button button-secondary" aria-label="Sign in with ORCID">
-                <img src="https://orcid.org/sites/default/files/images/orcid_24x24.png"
-                     alt="ORCID logo"
-                     class="me-2">
-                Sign in with ORCID
-            </a>
-            <p class="text-center mt-3" style="animation: fadeIn 0.5s ease-out 0.6s forwards; opacity: 0;">
-                You'll be redirected to ORCID to authenticate
+        <div class="card-content">
+            <h1>
+                <span class="title-orcid">ORCiD</span><br>
+                <span class="title-min">Publications</span>
+            </h1>
+            {% if not enable_orcid_login %}
+            <form action="/publications" method="post" class="form-group">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <input type="text"
+                        id="orcidInput"
+                        name="orcidInput"
+                        class="input-field"
+                        placeholder="0000-0001-2345-678X"
+                        pattern="^\d{4}-\d{4}-\d{4}-\d{3}[\dX]$"
+                        title="ORCiD format: 0000-0000-0000-0000 (last digit can be X)"
+                        required
+                        aria-label="ORCID identifier"
+                        {% if debug_mode %}autocomplete="off"{% endif %}>
+                <button type="submit" class="button" onclick="this.classList.add('loading')">
+                    <span class="button-text">Proceed</span>
+                </button>
+            </form>
+            {% endif %}
+            <div style="animation: fadeIn 0.5s ease-out 0.5s forwards; opacity: 0;">
+                <a href="/auth/orcid" class="button button-secondary" aria-label="Sign in with ORCID">
+                    <img src="https://orcid.org/sites/default/files/images/orcid_24x24.png"
+                         alt="ORCID logo"
+                         class="me-2">
+                    Sign in with ORCID
+                </a>
+            </div>
+            <p class="text-center instruction-text" style="animation: fadeIn 0.5s ease-out 0.3s forwards; opacity: 0;">
+                Press to explore your publications
+            </p>
+        
+            <div class="separator-line"></div>
+        
+            <p class="text-center" style="animation: fadeIn 0.5s ease-out 0.6s forwards; opacity: 0;">
+                You will be redirected to ORCID to authenticate
             </p>
         </div>
-        {% endif %}
     </div>
 </div>
 
 <script>
-    document.getElementById('orcidInput').addEventListener('input', function(e) {
-    this.value = this.value.toUpperCase();
-});
+    document.getElementById('orcidInput')?.addEventListener('input', function(e) {
+        this.value = this.value.toUpperCase();
+    });
 </script>
 {% endblock %}
