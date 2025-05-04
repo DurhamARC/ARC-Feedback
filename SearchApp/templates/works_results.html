@@ -27,8 +27,9 @@
             <input type="text" name="username" id="username"
                    class="form-input" value="{{ username }}"
                    required pattern="[A-Za-z ]{2,50}"
-                   title="Please enter your full name (letters and spaces only)"/>
-
+                   title="Please enter your full name (letters and spaces only)"
+                   readonly/>
+                    
             <input type="hidden" name="orcidInput" value="{{ orcidInput }}"/>
         </div>
         <div class="div">
@@ -102,19 +103,22 @@
     }
 
     .form-input {
-        padding: 0.75rem;
-        border: 2px solid #e0e0e0;
-        border-radius: 12px;
-        width: 100%;
-        max-width: 300px;
-        transition: all 0.3s ease;
-        font-size: 1rem;
-    }
+    padding: 0.75rem;
+    border: 2px solid #e0e0e0;
+    border-radius: 12px;
+    width: 100%;
+    max-width: 300px;
+    transition: all 0.3s ease;
+    font-size: 1rem;
+    user-select: none;
+    cursor: default;
+    }   
 
     .form-input:focus {
         border-color: #68246D;
         outline: none;
         box-shadow: 0 0 8px rgba(104, 36, 109, 0.2);
+        cursor: default;
     }
 
     .selection-list {

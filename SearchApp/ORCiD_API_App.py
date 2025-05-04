@@ -301,20 +301,31 @@ class OrcidApp(BaseFlaskApp):
 
             titles = [title.text for title in root.findall('.//work:title/common:title', namespaces) if title.text]
             if not titles:
-                 flash(f"No publications found for ORCID {orcid_id}.", "info")
+                flash(f"No publications found for ORCID {orcid_id}.", "info")
 
-            all_source_names = [name.text for name in root.findall('.//common:source-name', namespaces) if name.text]
             name = ''
-            if all_source_names:
-                from collections import Counter
-                name_counts = Counter(all_source_names)
-                threshold = len(all_source_names) * 0.9
-                common_names = [name for name, count in name_counts.items() if count >= threshold]
-                name = common_names[0] if common_names else all_source_names[0]
-            else:
-                 if 'user_name' in session:
-                     name = session['user_name']
+            all_assertion_origin_names = [name.text for name in root.findall('.//common:assertion-origin-name', namespaces) if name.text]
+            all_source_names = [name.text for name in root.findall('.//common:source-name', namespaces) if name.text]
 
+            if all_assertion_origin_names:
+                name_list_to_use = all_assertion_origin_names
+            elif all_source_names:
+                name_list_to_use = all_source_names
+
+
+            if name_list_to_use:
+                from collections import Counter
+                name_counts = Counter(name_list_to_use)
+                threshold_len = len(all_source_names) if all_source_names else 0
+                threshold = threshold_len * 0.75
+                common_names = [n for n, count in name_counts.items() if count >= threshold]
+
+                if common_names:
+                    name = common_names[0]
+                elif all_source_names:
+                    name = all_source_names[0]
+            else:
+                name = "N/A"
             normalised_titles = {normalise_title(title): title for title in titles if title}
             unique_titles = list(normalised_titles.values())
 
@@ -354,7 +365,6 @@ class OrcidApp(BaseFlaskApp):
             flash("Could not authenticate with the ORCID service.", "error")
             return redirect(url_for('orcid_fundings_search'))
 
-        orcid_id = None
         if request.method == 'POST':
             orcid_id = request.form.get('orcidInput')
             if not self._validate_orcid_id(orcid_id):
@@ -367,7 +377,12 @@ class OrcidApp(BaseFlaskApp):
         cache_key = f"orcid_fundings_{orcid_id}"
         cached_data = self._cache.get(cache_key)
         if cached_data:
-            return render_template('fundings_results.html', unique_titles=cached_data, orcidInput=orcid_id)
+            return render_template(
+                'fundings_results.html',
+                unique_titles=cached_data.get('titles', []),
+                username=cached_data.get('name', ''),
+                orcidInput=orcid_id
+            )
 
         url = f'https://pub.orcid.org/v3.0/{orcid_id}/fundings'
         headers = {
@@ -375,44 +390,88 @@ class OrcidApp(BaseFlaskApp):
             'Authorization': f'Bearer {access_token}'
         }
 
+        unique_titles = []
+        name = ''
+
         try:
             response = requests.get(url, headers=headers, timeout=15)
             response.raise_for_status()
 
+            # XML namespaces
             namespaces = {
                 'common': 'http://www.orcid.org/ns/common',
                 'funding': 'http://www.orcid.org/ns/funding'
             }
-
             root = ET.fromstring(response.text)
-            titles = [title.text for title in root.findall('.//funding:title/common:title', namespaces) if title.text]
+
+            all_assertion_origin_names = [
+                n.text for n in root.findall('.//common:assertion-origin-name', namespaces)
+                if n.text
+            ]
+            all_source_names = [
+                n.text for n in root.findall('.//common:source-name', namespaces)
+                if n.text
+            ]
+            name_list = all_assertion_origin_names or all_source_names
+            if name_list:
+                from collections import Counter
+                counts = Counter(name_list)
+                threshold = (len(all_source_names) * 0.75) if all_source_names else 0
+                common = [n for n, c in counts.items() if c >= threshold]
+                name = common[0] if common else (all_source_names[0] if all_source_names else '')
+            else:
+                name = "N/A"
+            titles = [
+                t.text for t in root.findall('.//funding:title/common:title', namespaces)
+                if t.text
+            ]
             if not titles:
-                 flash(f"No funding found for ORCID {orcid_id}.", "info")
+                flash(f"No funding found for ORCID {orcid_id}.", "info")
+            else:
+                normalized = {self.normalise_title(t): t for t in titles}
+                unique_titles = list(normalized.values())
 
-            normalised_titles = {normalise_title(title): title for title in titles if title}
-            unique_titles = list(normalised_titles.values())
+            self._cache.set(cache_key, {'titles': unique_titles, 'name': name}, timeout=120)
 
-            self._cache.set(cache_key, unique_titles, timeout=120)
-
-            return render_template('fundings_results.html', unique_titles=unique_titles, orcidInput=orcid_id)
+            return render_template(
+                'fundings_results.html',
+                unique_titles=unique_titles,
+                username=name,
+                orcidInput=orcid_id
+            )
 
         except requests.exceptions.HTTPError as e:
-            status_code = e.response.status_code
-            if status_code == 404:
-                flash(f"Could not find an ORCID record or fundings for {orcid_id}.", "error")
-            elif status_code == 401 or status_code == 403:
-                 flash("Authorization error with ORCID. Please check credentials or contact support.", "error")
-                 self._cache.delete_memoized(self._fetch_orcid_token)
+            status = e.response.status_code
+            if status == 404:
+                flash(
+                    f"No funding found for ORCID {orcid_id}, or the ORCID ID itself could not be found.",
+                    "info"
+                )
+                self._cache.delete(cache_key)
+                return render_template(
+                    'fundings_results.html',
+                    unique_titles=[],
+                    username='',
+                    orcidInput=orcid_id
+                )
+            elif status in (401, 403):
+                flash("Authorization error with ORCID. Please check credentials or contact support.", "error")
+                self._cache.delete_memoized(self._fetch_orcid_token)
+                return redirect(url_for('orcid_fundings_search'))
             else:
-                flash(f"Error fetching funding data from ORCID (Code: {status_code}). Please try again later.", "error")
-            return redirect(url_for('orcid_fundings_search'))
-        except requests.exceptions.RequestException as e:
+                flash(f"Error fetching funding data from ORCID (Code: {status}). Please try again later.", "error")
+                return redirect(url_for('orcid_fundings_search'))
+
+        except requests.exceptions.RequestException:
             flash("Could not connect to the ORCID service for fundings. Please check your network or try again later.", "error")
             return redirect(url_for('orcid_fundings_search'))
-        except ET.ParseError as e:
+
+        except ET.ParseError:
             flash("Received invalid data format from ORCID for fundings. Please try again.", "error")
             return redirect(url_for('orcid_fundings_search'))
-        except Exception as e:
+
+        except Exception as exc:
+            current_app.logger.error(f"Unexpected error in get_orcid_fundings_data: {exc}")
             flash("An unexpected error occurred while processing your fundings.", "error")
             return redirect(url_for('orcid_fundings_search'))
 

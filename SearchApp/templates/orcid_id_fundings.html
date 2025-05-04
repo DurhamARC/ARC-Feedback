@@ -17,7 +17,7 @@
     <div class="card">
         <h1>ORCiD Fundings</h1>
 
-        <p class="text-center">
+        <p class="text-center" style="animation: fadeIn 0.5s ease-out 0.3s forwards; opacity: 0;">
             Enter your ORCiD identifier below to search for research fundings
         </p>
         
@@ -37,6 +37,19 @@
                 <span class="button-text">Proceed</span>
             </button>
         </form>
+        {% if enable_orcid_login %}
+        <div class="mt-4" style="animation: fadeIn 0.5s ease-out 0.5s forwards; opacity: 0;">
+            <a href="/auth/orcid" class="button button-secondary" aria-label="Sign in with ORCID">
+                <img src="https://orcid.org/sites/default/files/images/orcid_24x24.png"
+                     alt="ORCID logo"
+                     class="me-2">
+                Sign in with ORCID
+            </a>
+            <p class="text-center mt-3" style="animation: fadeIn 0.5s ease-out 0.6s forwards; opacity: 0;">
+                You'll be redirected to ORCID to authenticate
+            </p>
+        </div>
+        {% endif %}
     </div>
 </div>
 
