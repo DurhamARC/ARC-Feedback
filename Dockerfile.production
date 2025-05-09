@@ -32,6 +32,7 @@ RUN chmod +x /usr/local/bin/init.sh
 
 # Copy application files
 COPY SearchApp ./SearchApp
+COPY wsgi.py wsgi.py
 
 # Create necessary directories and set permissions
 RUN mkdir -p instance && \
