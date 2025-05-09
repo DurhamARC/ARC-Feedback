@@ -1,6 +1,11 @@
 #!/bin/bash
 set -e
 
+echo "Setting environment..."
+# Set the environment variables in /etc/environment for use in login shells
+# https://stackoverflow.com/a/34631891/1681205
+env | egrep -v "^(PATH=|HOME=|USER=|MAIL=|LC_ALL=|LS_COLORS=|LANG=|HOSTNAME=|PWD=|TERM=|SHLVL=|LANGUAGE=|_=)" >> /etc/environment
+
 echo "Starting SSH ..."
 service ssh start
 
