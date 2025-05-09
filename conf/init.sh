@@ -21,5 +21,5 @@ cd /app/
 # Add `--access-logfile '-' --log-level=debug \` for debugging
 exec gunicorn \
         --workers 2 --timeout=20 \
-        --log-file=- --bind=127.0.0.1:5000 \
+        --log-file=- --bind=0.0.0.0:5000 \
         wsgi:app
