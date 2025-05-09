@@ -737,10 +737,19 @@ class OrcidApp(BaseFlaskApp):
         try:
             page = request.args.get('page', 1, type=int)
             per_page = 25
-            records = Record.query.order_by(Record.created_at.desc()).paginate(page=page, per_page=per_page, error_out=False)
+            records = db.session.query(Record.id, Record.orcid, User.name, Record.title, Record.type, Record.created_at) \
+                                .join(User, User.orcid == Record.orcid)
+            
+            #current_app.logger.info(records)
+
+            records = records.order_by(Record.created_at.desc()) \
+                            .paginate(page=page, per_page=per_page, error_out=False)
+            
             return render_template('admin/data.html', records=records)
         except Exception as e:
+            current_app.logger.error(f"Error: {str(e)}")
             flash('Error retrieving data for display.', 'error')
+            
             return redirect(url_for('admin_dashboard'))
 
 orcid_app = OrcidApp(__name__)
