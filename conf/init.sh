@@ -11,7 +11,7 @@ ln -sf /dev/stdout /var/log/nginx/access.log
 ln -sf /dev/stderr /var/log/nginx/error.log
 service nginx start
 
-cd /app/SearchApp
+cd /app/
 
 # Add `--access-logfile '-' --log-level=debug \` for debugging
 gunicorn --workers 2 --timeout=20 \
