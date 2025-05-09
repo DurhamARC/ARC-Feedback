@@ -14,5 +14,7 @@ service nginx start
 cd /app/
 
 # Add `--access-logfile '-' --log-level=debug \` for debugging
-gunicorn --workers 2 --timeout=20 \
-         --log-file=- --bind=127.0.0.1:5000 wsgi:app
+exec gunicorn \
+        --workers 2 --timeout=20 \
+        --log-file=- --bind=127.0.0.1:5000 \
+        wsgi:app
