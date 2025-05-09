@@ -120,6 +120,7 @@ jobs:
             -DATABASE_URL "$(DATABASE_URL)"
             -ORCID_REDIRECT_URI "$(ORCID_REDIRECT_URI)"
             -ENABLE_ORCID_LOGIN "true"
+            -WTF_CSRF_ENABLED "true"
             -DEBUG "false"
 
       - task: AzureAppServiceManage@0
