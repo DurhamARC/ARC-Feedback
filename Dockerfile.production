@@ -30,6 +30,9 @@ COPY conf/subsite.conf /etc/nginx/sites-available/default
 COPY conf/init.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/init.sh
 
+# Source variables
+RUN echo "export \$(cat /etc/environment | awk '''!/^\s*#/''' | xargs)" >> /root/.profile
+
 # Copy application files
 COPY SearchApp ./SearchApp
 COPY wsgi.py wsgi.py
