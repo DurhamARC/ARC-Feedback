@@ -1,11 +1,11 @@
 {% extends "base.html" %}
-{% block title %}Home Page{% endblock %}
+{% block title %}ARC Feedback{% endblock %}
 {% set page = 'home' %}
 {% block content %}
 
 <div class="page-container">
     <div class="welcome-message">
-        <h1>Welcome to ORCiD Search</h1>
+        <h1>Welcome to ARC Feedback</h1>
         <p class="lead">Explore research outputs and funding information linked through ORCiD identifiers</p>
         
         <div class="info-section">
@@ -16,18 +16,18 @@
     <div class="card-grid">
         <div class="feature-card">
             <h2>Publications</h2>
-            <p>Submit your academic publications</p>
+            <p>Select your academic publications</p>
             <a href='/publications/search' class="button" aria-label="View publications">
-                View Publications
+                Open
             </a>
         </div>
         
         <div class="feature-card">
             <h2>Fundings</h2>
-            <p>Explore and submit your research funding information</p>
-            <button class="button" disabled aria-label="Browse fundings (coming soon)">
-                Coming Soon
-            </button>
+            <p>Select your funding information</p>
+            <a href='/fundings/search' class="button" aria-label="View fundings">
+                Open
+            </a>
         </div>
     </div>
 </div>

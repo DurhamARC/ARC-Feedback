@@ -1,4 +1,4 @@
-from ORCiD_API_App import orcid_app, db
+from SearchApp.ORCiD_API_App import orcid_app, db
 from flask_migrate import Migrate
 import os
 

@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Admin Dashboard{% endblock %}
+{% block content %}
+<div class="container mt-5">
+    <h1>Admin Dashboard</h1>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    <ul class="list-group">
+        <li class="list-group-item"><a href="{{ url_for('download_all') }}">Download All Data as Excel</a></li>
+        <li class="list-group-item"><a href="{{ url_for('download_time_range') }}">Download Data by Time Range</a></li>
+        <li class="list-group-item"><a href="{{ url_for('clear_database') }}">Clear Database</a></li>
+        <li class="list-group-item"><a href="{{ url_for('admin_data') }}">View Data Table</a></li>
+        <li class="list-group-item"><a href="{{ url_for('admin_logout') }}">Logout</a></li>
+    </ul>
+</div>
+{% endblock %}
