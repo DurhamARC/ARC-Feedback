@@ -1,6 +1,7 @@
 # Pipeline to build and release the ARC feedback application
-
+trigger: none
 pr: none
+appendCommitMessageToRunName: true
 
 pool:
 # we need an agent which has Docker installed
@@ -17,8 +18,6 @@ variables:
   # Azure container registry connection details
   - name: azureSubscription
     value: 'svc-con-awh-01'
-  - name: dockerRegistryServiceConnection 
-    value: 'duuksawhacr01'
   - name: dockerRegistryServerURL
     value: 'duuksawhacr01.azurecr.io'
 
@@ -36,58 +35,8 @@ variables:
   - name: appResourceGroupName
     value: 'duuksawh-arc-feedback'
 
-  # Dockerfiles to build
-  - name: dockerfilePath
-    value: 'Dockerfile.production'
-
-
 jobs:
-  - job: build
-    displayName: Build ARC Feedback Application
-
-    steps:
-      - task: Docker@2
-        displayName: Login to ACR
-        inputs:
-          command: 'login'
-          containerRegistry: '$(dockerRegistryServiceConnection)'
-
-      # Set commit hash variables: these will be used to tag docker images
-      # Then, pull existing layers from the docker container registry server, to use as build cache
-      - script: |
-          pwd && ls -lA
-          echo "##vso[task.setvariable variable=commitHash;]`git rev-parse --short HEAD`"
-          docker pull $(dockerRegistryServerURL)/$(dockerNamespace)/$(image):latest
-        displayName: Pull latest for layer caching
-        continueOnError: true # for first build, no cache
-
-      # Build the CDCS container (main database server)
-      - task: Docker@2
-        displayName: "Build image"
-        inputs:
-          command: 'build'
-          repository: "$(dockerNamespace)/$(image)"
-          dockerfile: "$(dockerfilePath)"
-          containerRegistry: "$(dockerRegistryServiceConnection)"
-          arguments: |
-            --cache-from=$(dockerRegistryServerURL)/$(dockerNamespace)/$(image-cdcs):latest
-          tags: |
-            $(tag)
-            $(commitHash)
-
-      - task: Docker@2
-        displayName: "Push image"
-        inputs:
-          command: push
-          containerRegistry: "$(dockerRegistryServiceConnection)"
-          repository: "$(dockerNamespace)/$(image)"
-          tags: |
-            $(tag)
-            $(commitHash)
-
-
   - job: release
-    dependsOn: build
     displayName: Release app to Azure App Service Environment
     steps:
 
