@@ -35,7 +35,6 @@ RUN echo "export \$(cat /etc/environment | awk '''!/^\s*#/''' | xargs)" >> /root
 
 # Copy application files
 COPY SearchApp ./SearchApp
-COPY wsgi.py wsgi.py
 
 # Create necessary directories and set permissions
 RUN mkdir -p instance && \

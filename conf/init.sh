@@ -16,7 +16,7 @@ ln -sf /dev/stdout /var/log/nginx/access.log
 ln -sf /dev/stderr /var/log/nginx/error.log
 service nginx start
 
-cd /app/
+cd /app/SearchApp
 
 # Add `--access-logfile '-' --log-level=debug \` for debugging
 exec gunicorn \

@@ -19,6 +19,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application files
 COPY . .
 
+WORKDIR /app/SearchApp
+
 # Create necessary directories and set permissions
 RUN mkdir -p instance && \
     chmod -R 755 instance/
