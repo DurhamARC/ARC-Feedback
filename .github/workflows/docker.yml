@@ -46,11 +46,11 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           tags: >
-            ${{ secrets.AZURE_ACR_REGISTRY }}/${{ env.image }}:latest , 
-            ${{ secrets.AZURE_ACR_REGISTRY }}/${{ env.image }}:${{ env.SHORT_SHA }} ,
-            ${{ secrets.AZURE_ACR_REGISTRY }}/${{ env.image }}:${{ env.BRANCH }}
-          cache-from: type=registry,ref=${{ secrets.AZURE_ACR_REGISTRY }}/${{ env.image }}:cache
-          cache-to: type=registry,ref=${{ secrets.AZURE_ACR_REGISTRY }}/${{ env.image }}:cache,mode=max
+            ${{ vars.AZURE_ACR_REGISTRY }}/${{ env.image }}:latest , 
+            ${{ vars.AZURE_ACR_REGISTRY }}/${{ env.image }}:${{ env.SHORT_SHA }} ,
+            ${{ vars.AZURE_ACR_REGISTRY }}/${{ env.image }}:${{ env.BRANCH }}
+          cache-from: type=registry,ref=${{ vars.AZURE_ACR_REGISTRY }}/${{ env.image }}:cache
+          cache-to: type=registry,ref=${{ vars.AZURE_ACR_REGISTRY }}/${{ env.image }}:cache,mode=max
 
   release:
     name: Release to Azure Pipelines Production
