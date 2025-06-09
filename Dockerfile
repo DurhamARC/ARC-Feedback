@@ -32,4 +32,3 @@ EXPOSE 5000
 
 ENTRYPOINT ["/usr/local/bin/init.sh"]
 CMD ["flask", "run", "--host=0.0.0.0", "--port=5000"]
-
