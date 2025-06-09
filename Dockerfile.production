@@ -1,0 +1,47 @@
+#syntax=docker/dockerfile
+#check=skip=SecretsUsedInArgOrEnv;error=true
+FROM python:3.13.2-slim-bookworm
+
+# Set environment variables
+ENV FLASK_APP=ORCiD_API_App.py
+ENV FLASK_ENV=production
+
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends postgresql-client \
+        nginx openssh-server ca-certificates && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# Copy requirements first to leverage Docker cache
+RUN python -m pip install --upgrade pip
+# Install production dependencies
+RUN pip install whitenoise gunicorn
+# Install application dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy nginx configuration
+COPY conf/subsite.conf /etc/nginx/sites-available/default
+
+# Copy entrypoint script
+COPY conf/init.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/init.sh
+
+# Copy application files
+COPY SearchApp ./SearchApp
+
+# Create necessary directories and set permissions
+RUN mkdir -p instance && \
+    chmod -R 755 instance/
+
+# ssh
+ENV SSH_PASSWD="root:Docker!"
+RUN echo "$SSH_PASSWD" | chpasswd
+COPY conf/sshd_config /etc/ssh/
+
+EXPOSE 8080 5000 2222
+
+CMD ["init.sh"]
