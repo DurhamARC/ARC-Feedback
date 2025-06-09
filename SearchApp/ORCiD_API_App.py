@@ -34,7 +34,7 @@ def normalise_title(title):
     normalised = normalised.encode('ascii', 'ignore').decode('ascii')
     return normalised
 
-# Import SQLalchemy along with the database models (important)
+# Import SQLalchemy along with the database models
 from models import db, User, Record, Admin
 
 class AdminLoginForm(FlaskForm):
@@ -63,12 +63,6 @@ def init_db(app):
     return wrapper
 
 class BaseFlaskApp:
-    def __init__(self, app_name):
-        self.app = Flask(app_name)
-        self.app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
-        self.app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-        db.init_app(self.app)
-        self._register_cli_commands()
 
     def _register_cli_commands(self):
         @self.app.cli.command("init-db")
@@ -88,7 +82,14 @@ class BaseFlaskApp:
                 admin.set_password(password)
                 db.session.add(admin)
                 db.session.commit()
-            print(f"Admin user {username} created.")
+            print(f"Admin user {username} created.")    
+
+    def __init__(self, app_name):
+        self.app = Flask(app_name)
+        self.app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
+        self.app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+        db.init_app(self.app)
+        self._register_cli_commands()
 
     def run(self, *args, **kwargs):
         self.app.run(*args, **kwargs)

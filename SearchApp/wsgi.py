@@ -1,5 +1,5 @@
-from SearchApp.ORCiD_API_App import orcid_app
-from SearchApp.models import db
+from ORCiD_API_App import orcid_app
+from models import db
 
 from flask_migrate import Migrate
 import os
