@@ -47,4 +47,6 @@ COPY conf/sshd_config /etc/ssh/
 
 EXPOSE 8080 5000 2222
 
-CMD ["init.sh"]
+ENTRYPOINT ["init.sh"]
+CMD ["gunicorn", "--workers=2", "--timeout=20", "--log-file=-", "--bind=0.0.0.0:5000", "wsgi:app"]
+

@@ -17,6 +17,9 @@ RUN python -m pip install --upgrade pip
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application files
+COPY conf/init-dev.sh /usr/local/bin/init.sh
+RUN chmod +x /usr/local/bin/init.sh
+
 COPY . .
 
 WORKDIR /app/SearchApp
@@ -27,4 +30,6 @@ RUN mkdir -p instance && \
 
 EXPOSE 5000
 
-CMD ["sh", "-c", "flask init-db && flask run --host=0.0.0.0 --port=5000"]
+ENTRYPOINT ["/usr/local/bin/init.sh"]
+CMD ["flask", "run", "--host=0.0.0.0", "--port=5000"]
+
