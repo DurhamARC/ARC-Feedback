@@ -34,8 +34,8 @@ def normalise_title(title):
     normalised = normalised.encode('ascii', 'ignore').decode('ascii')
     return normalised
 
-# Import SQLalchemy along with the database models (extremely important import)
-from SearchApp.models import db, User, Record, Admin
+# Import SQLalchemy along with the database models (important)
+from models import db, User, Record, Admin
 
 class AdminLoginForm(FlaskForm):
     username = StringField('Username', validators=[DataRequired(), Length(min=4, max=50)])
@@ -119,7 +119,6 @@ class OrcidApp(BaseFlaskApp):
         self._limiter = Limiter(
             get_remote_address,
             app=self.app,
-            default_limits=["200 per day", "50 per hour"],
             storage_uri="memory://",
         )
 
