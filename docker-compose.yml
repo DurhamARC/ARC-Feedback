@@ -33,16 +33,7 @@ services:
         condition: service_healthy
     volumes:
       - ./SearchApp/migrations:/app/SearchApp/migrations
-    command: >
-      sh -c "
-        until PGPASSWORD=$${DB_PASS} pg_isready -h postgres -U $${DB_USER} -d $${DB_NAME} >/dev/null 2>&1; do
-          echo 'Waiting for database...';
-          sleep 2;
-        done;
-        env
-        flask db upgrade &&
-        gunicorn --bind 0.0.0.0:5000 wsgi:app
-      "
+    command: gunicorn --bind 0.0.0.0:5000 wsgi:app
     networks:
       - backend
 
