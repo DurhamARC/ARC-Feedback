@@ -28,7 +28,6 @@ until PGPASSWORD=${DB_PASS} PGPORT=${POSTGRES_PORT} pg_isready -h ${POSTGRES_HOS
   sleep 2
 done;
 
-#flask db init
 flask db upgrade
 
 exec $@

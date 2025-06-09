@@ -18,5 +18,7 @@ service nginx start
 
 cd /app/SearchApp
 
+flask db upgrade
+
 # Add `--access-logfile '-' --log-level=debug \` for debugging
 exec $@
