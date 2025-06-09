@@ -30,6 +30,10 @@ RUN mkdir -p instance && \
 
 EXPOSE 5000
 
+<<<<<<< HEAD
 ENTRYPOINT ["/usr/local/bin/init.sh"]
 CMD ["flask", "run", "--host=0.0.0.0", "--port=5000"]
 
+=======
+CMD ["sh", "-c", "flask init-db && flask run --host=0.0.0.0 --port=5000"]
+>>>>>>> 5665188 (Update Dockerfiles and WSGI to reference correct module from correct workdir)

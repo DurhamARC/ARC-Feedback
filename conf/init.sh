@@ -17,8 +17,11 @@ ln -sf /dev/stderr /var/log/nginx/error.log
 service nginx start
 
 cd /app/SearchApp
+<<<<<<< HEAD
 
 flask db upgrade
+=======
+>>>>>>> 5665188 (Update Dockerfiles and WSGI to reference correct module from correct workdir)
 
 # Add `--access-logfile '-' --log-level=debug \` for debugging
 exec $@
