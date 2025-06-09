@@ -1,6 +1,6 @@
 import unittest
 from flask import Flask
-from SearchApp.ORCiD_API_App import OrcidApp
+from ORCiD_API_App import OrcidApp
 
 class OrcidAppTestCase(unittest.TestCase):
     def setUp(self):

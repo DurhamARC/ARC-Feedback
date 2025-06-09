@@ -1,18 +1,15 @@
 from flask import Flask, redirect, render_template, request, jsonify, current_app, flash, url_for, session, abort, send_file
-from werkzeug.security import generate_password_hash, check_password_hash
 from wtforms import StringField, PasswordField, SubmitField, DateField
 from wtforms.validators import DataRequired, Length
-from datetime import datetime, timezone, timedelta
 from flask_limiter.util import get_remote_address
-from flask_sqlalchemy import SQLAlchemy
 from flask_wtf.csrf import CSRFProtect
 import xml.etree.ElementTree as ET
 from flask_migrate import Migrate
 from flask_limiter import Limiter
 from flask_caching import Cache
 from flask_wtf import FlaskForm
+from datetime import timedelta
 from dotenv import load_dotenv
-from zoneinfo import ZoneInfo
 from functools import wraps
 from io import BytesIO
 import pandas as pd
@@ -24,9 +21,6 @@ import os
 import secrets
 
 load_dotenv()
-db = SQLAlchemy()
-utc_now = datetime.now(timezone.utc)
-uk_time = utc_now.astimezone(ZoneInfo("Europe/London"))
 
 def normalise_title(title):
     if not title or not isinstance(title, str):
@@ -40,39 +34,8 @@ def normalise_title(title):
     normalised = normalised.encode('ascii', 'ignore').decode('ascii')
     return normalised
 
-class User(db.Model):
-    __tablename__ = 'users'
-    id = db.Column(db.Integer, primary_key=True)
-    orcid = db.Column(db.String(19), nullable=False, unique=True, index=True)
-    name = db.Column(db.String(100), nullable=False, index=True)
-    created_at = db.Column(db.DateTime, default=uk_time, nullable=False, index=True)
-    records = db.relationship('Record', backref='users', lazy=True)
-    __table_args__ = (
-        db.Index('idx_user_orcid_name', 'orcid', 'name'),
-    )
-
-class Record(db.Model):
-    __tablename__ = 'records'
-    id = db.Column(db.Integer, primary_key=True)
-    orcid = db.Column(db.String(19), db.ForeignKey('users.orcid'), nullable=False, index=True)
-    title = db.Column(db.String(500), nullable=False, index=True)
-    type = db.Column(db.Enum('publication', 'funding', name='record_type'), nullable=False, index=True)
-    created_at = db.Column(db.DateTime, default=uk_time, nullable=False, index=True)
-    __table_args__ = (
-        db.Index('idx_record_orcid_type', 'orcid', 'type'),
-    )
-
-class Admin(db.Model):
-    __tablename__ = 'admins'
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(50), unique=True, nullable=False)
-    password_hash = db.Column(db.String(256), nullable=False)
-
-    def set_password(self, password):
-        self.password_hash = generate_password_hash(password)
-
-    def check_password(self, password):
-        return check_password_hash(self.password_hash, password)
+# Import SQLalchemy along with the database models (important)
+from models import db, User, Record, Admin
 
 class AdminLoginForm(FlaskForm):
     username = StringField('Username', validators=[DataRequired(), Length(min=4, max=50)])
@@ -156,7 +119,6 @@ class OrcidApp(BaseFlaskApp):
         self._limiter = Limiter(
             get_remote_address,
             app=self.app,
-            default_limits=["200 per day", "50 per hour"],
             storage_uri="memory://",
         )
 
@@ -229,7 +191,7 @@ class OrcidApp(BaseFlaskApp):
                 response.raise_for_status()
                 return response.json().get("access_token")
             except requests.exceptions.RequestException as e:
-                return None
+                return flash(f"Error: Request exception inside of fetch_orcid_token: {e}", "error")
         return _inner_fetch()
 
     @handle_errors
@@ -303,6 +265,7 @@ class OrcidApp(BaseFlaskApp):
             if not titles:
                 flash(f"No publications found for ORCID {orcid_id}.", "info")
 
+            # Name Retriever Start
             name = ''
             all_assertion_origin_names = [name.text for name in root.findall('.//common:assertion-origin-name', namespaces) if name.text]
             all_source_names = [name.text for name in root.findall('.//common:source-name', namespaces) if name.text]
@@ -326,6 +289,8 @@ class OrcidApp(BaseFlaskApp):
                     name = all_source_names[0]
             else:
                 name = "N/A"
+            # Name Retriever End
+
             normalised_titles = {normalise_title(title): title for title in titles if title}
             unique_titles = list(normalised_titles.values())
 
