@@ -5,29 +5,15 @@
 <div class="container">
     <div class="header-section">
         <h2 class="page-title">Publications Selection</h2>
-        <p class="page-subtitle">Select all publications you've worked on using our ARC infrastructure</p>
+        <p class="page-subtitle">Please select the ones you have worked on using our ARC infrastructure</p>
     </div>
-
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            <div class="alert-messages">
-                {% for category, message in messages %}
-                    <div class="alert alert-{{ category }}">
-                        {{ message }}
-                    </div>
-                {% endfor %}
-            </div>
-        {% endif %}
-    {% endwith %}
-
+    
     <form action="/process/publications" method="post" class="selection-form">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
         <div class="form-group">
-            <label for="username" class="form-label">Your Full Name:</label>
+            <label for="username" class="form-label"><em>Your Full Name:</em></label>
             <input type="text" name="username" id="username"
                    class="form-input" value="{{ username }}"
-                   required pattern="[A-Za-z ]{2,50}"
-                   title="Please enter your full name (letters and spaces only)"
                    readonly/>
                     
             <input type="hidden" name="orcidInput" value="{{ orcidInput }}"/>
@@ -46,6 +32,17 @@
                 </div>
             {% endfor %}
         </div>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="alert-messages">
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}   
 
         <div class="form-actions">
             <button type="button" class="btn btn-select-all">Select/Deselect all</button>
@@ -292,7 +289,7 @@
     .alert {
         padding: 1rem;
         margin-bottom: 1.5rem;
-        border-radius: 12px;
+        border-radius: 11px;
         animation: slideIn 0.3s ease-out;
     }
 
@@ -309,8 +306,8 @@
 
     .alert-success {
         background: #e6ffe6;
-        color: #006600;
-        border-left: 5px solid #006600;
+        color: #4c814c;
+        border-left: 5px solid #68246D;
     }
 </style>
 

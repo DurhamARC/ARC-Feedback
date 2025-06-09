@@ -265,6 +265,7 @@ class OrcidApp(BaseFlaskApp):
             if not titles:
                 flash(f"No publications found for ORCID {orcid_id}.", "info")
 
+            # Name Retriever Start
             name = ''
             all_assertion_origin_names = [name.text for name in root.findall('.//common:assertion-origin-name', namespaces) if name.text]
             all_source_names = [name.text for name in root.findall('.//common:source-name', namespaces) if name.text]
@@ -288,6 +289,8 @@ class OrcidApp(BaseFlaskApp):
                     name = all_source_names[0]
             else:
                 name = "N/A"
+            # Name Retriever End
+
             normalised_titles = {normalise_title(title): title for title in titles if title}
             unique_titles = list(normalised_titles.values())
 
