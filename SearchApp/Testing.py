@@ -1,6 +1,11 @@
 import unittest
-from flask import Flask
 from ORCiD_API_App import OrcidApp
+from flask import current_app, Flask
+import requests
+
+def app():
+    app = Flask(__name__)
+    return app
 
 class OrcidAppTestCase(unittest.TestCase):
     def setUp(self):
@@ -26,6 +31,18 @@ class OrcidAppTestCase(unittest.TestCase):
                 self.assertNotEqual(response.status_code, 200)
             else:
                 self.assertEqual(response.status_code, 200)
+    def test_auth_init(self):
+        with self.app.app.test_client() as c:
+            response = c.get("/auth/orcid")
+            print(response)
+
+        #self.assertEqual(self.app.initiate_orcid_auth())
+            
+    def test_handle_orcid_callback(self):
+        with self.app.app.test_client() as c:
+            response = c.get("http://127.0.0.1:5000/auth/orcid/callback")
+            print(response)
+        
 
 if __name__ == '__main__':
-    unittest.main()
+    unittest.main(verbosity=2)
