@@ -71,12 +71,6 @@ class BaseFlaskApp:
         self._register_cli_commands()
 
     def _register_cli_commands(self):
-        @self.app.cli.command("init-db")
-        def init_db_command():
-            """Initialize the database."""
-            with self.app.app_context():
-                db.create_all()
-            print("Database initialized")
 
         @self.app.cli.command("create-admin")
         @click.argument("username")
@@ -147,7 +141,6 @@ class OrcidApp(BaseFlaskApp):
     def _register_routes(self):
         self.app.route("/")(self.home)
         self.app.route("/publications/search")(self.orcid_works_search)
-        self.app.route("/fundings/search")(self.orcid_fundings_search)
         self.app.route('/publications', methods=['GET', 'POST'])(self.get_orcid_works_data)
         self.app.route('/fundings', methods=['GET', 'POST'])(self.get_orcid_fundings_data)
         self.app.route('/api/token', methods=['GET', 'POST'])(self.get_access_token)
@@ -170,10 +163,6 @@ class OrcidApp(BaseFlaskApp):
     @handle_errors
     def orcid_works_search(self):
         return render_template("orcid_id_works.html", enable_orcid_login=os.getenv('ENABLE_ORCID_LOGIN', 'true').lower() in ('true'), debug_mode=current_app.debug)
-
-    @handle_errors
-    def orcid_fundings_search(self):
-        return render_template("orcid_id_fundings.html", debug_mode=current_app.debug)
 
     def _fetch_orcid_token(self):
         @self._cache.memoize(timeout=3500)
@@ -218,7 +207,7 @@ class OrcidApp(BaseFlaskApp):
                 orcid_id = session['orcid_id']
                 source = 'session'
             else:
-                flash("Please log in with ORCID or enter your ORCID ID on the search page.", "info")
+                flash("Please log in with ORCID on the first page.", "info")
                 return redirect(url_for('orcid_works_search'))
 
         elif request.method == 'POST':
@@ -325,30 +314,40 @@ class OrcidApp(BaseFlaskApp):
     @handle_errors
     def get_orcid_fundings_data(self):
         self._limiter.limit("10 per minute")(lambda: None)
+
+        orcid_id = None
+        source = None
+
+        if request.method == 'GET':
+            if 'orcid_id' in session:
+                orcid_id = session['orcid_id']
+                source = 'session'
+            else:
+                flash("Please log in with ORCID or enter your ORCID ID on the search page.", "info")
+                return redirect(url_for('orcid_works_search'))
+
         access_token = self._fetch_orcid_token()
         if not access_token:
-            flash("Could not authenticate with the ORCID service.", "error")
-            return redirect(url_for('orcid_fundings_search'))
+            flash("Could not authenticate with the ORCID service at this time. Please try again later.", "error")
+            return redirect(url_for('orcid_works_search'))
 
-        if request.method == 'POST':
-            orcid_id = request.form.get('orcidInput')
-            if not self._validate_orcid_id(orcid_id):
-                flash("Invalid ORCiD format. Use XXXX-XXXX-XXXX-XXXX.", "error")
-                return redirect(url_for('orcid_fundings_search'))
-        else:
-            flash("Please enter an ORCID ID on the search page.", "info")
-            return redirect(url_for('orcid_fundings_search'))
-
-        cache_key = f"orcid_fundings_{orcid_id}"
+        cache_key = f"orcid_works_{orcid_id}"
         cached_data = self._cache.get(cache_key)
-        if cached_data:
+
+        cache_key_fundings = f"orcid_fundings_{orcid_id}"
+        cached_data_fundings = self._cache.get(cache_key_fundings)
+
+        if cached_data and cached_data_fundings:
             return render_template(
                 'fundings_results.html',
-                unique_titles=cached_data.get('titles', []),
+                unique_titles=cached_data_fundings.get('titles', []),
                 username=cached_data.get('name', ''),
                 orcidInput=orcid_id
             )
-
+        elif not cached_data or cached_data_fundings:
+            flash("Could not fetch cached data", "error")
+            return redirect(url_for("orcid_works_search"))
+        
         url = f'https://pub.orcid.org/v3.0/{orcid_id}/fundings'
         headers = {
             'Accept': 'application/vnd.orcid+xml',
@@ -385,13 +384,14 @@ class OrcidApp(BaseFlaskApp):
                 common = [n for n, c in counts.items() if c >= threshold]
                 name = common[0] if common else (all_source_names[0] if all_source_names else '')
             else:
-                name = "N/A"
+                name = cached_data.get('name', '')
+                
             titles = [
                 t.text for t in root.findall('.//funding:title/common:title', namespaces)
                 if t.text
             ]
             if not titles:
-                flash(f"No funding found for ORCID {orcid_id}.", "info")
+                flash(f"No funding found for ORCID {orcid_id}. (press submit)", "info")
             else:
                 normalized = {normalise_title(t): t for t in titles}
                 unique_titles = list(normalized.values())
@@ -422,23 +422,23 @@ class OrcidApp(BaseFlaskApp):
             elif status in (401, 403):
                 flash("Authorization error with ORCID. Please check credentials or contact support.", "error")
                 self._cache.delete_memoized(self._fetch_orcid_token)
-                return redirect(url_for('orcid_fundings_search'))
+                return redirect(url_for('orcid_works_search'))
             else:
                 flash(f"Error fetching funding data from ORCID (Code: {status}). Please try again later.", "error")
-                return redirect(url_for('orcid_fundings_search'))
+                return redirect(url_for('orcid_works_search'))
 
         except requests.exceptions.RequestException:
             flash("Could not connect to the ORCID service for fundings. Please check your network or try again later.", "error")
-            return redirect(url_for('orcid_fundings_search'))
+            return redirect(url_for('orcid_works_search'))
 
         except ET.ParseError:
             flash("Received invalid data format from ORCID for fundings. Please try again.", "error")
-            return redirect(url_for('orcid_fundings_search'))
+            return redirect(url_for('orcid_works_search'))
 
         except Exception as exc:
             current_app.logger.error(f"Unexpected error in get_orcid_fundings_data: {exc}")
             flash("An unexpected error occurred while processing your fundings.", "error")
-            return redirect(url_for('orcid_fundings_search'))
+            return redirect(url_for('orcid_works_search'))
 
     def process_works_form(self):
         selected_titles = request.form.getlist('selected_titles')
@@ -449,10 +449,10 @@ class OrcidApp(BaseFlaskApp):
              flash('Invalid or missing ORCID ID.', 'error')
              return redirect(url_for('orcid_works_search'))
 
-        if username and not re.match(r"^[A-Za-zÀ-ÖØ-öø-ÿ.'\- ]{2,100}$", username):
+        if username and not re.match(r"^(n/a|[a-zA-Zà-ÿ.' -]{2,100})$", username, re.IGNORECASE):
              flash('Invalid characters in name or name too long/short.', 'error')
              return redirect(url_for('orcid_works_search'))
-
+        
         if not selected_titles:
              flash('No publications selected to save.', 'warning')
              return redirect(url_for('orcid_works_search'))
@@ -477,11 +477,53 @@ class OrcidApp(BaseFlaskApp):
                     db.session.commit()
                     flash(f'{saved_count} publication(s) saved successfully!', 'success')
                 else:
-                    flash('No new publications were selected or saved.', 'info')
+                    logging.debug("No new publications were selected or saved.")
 
         except Exception as e:
             db.session.rollback()
             flash('An error occurred while saving the publications. Please try again.', 'error')
+            return redirect(url_for('orcid_works_search'))
+
+        return redirect(url_for('get_orcid_fundings_data'))
+
+    def process_fundings_form(self):
+        selected_titles = request.form.getlist('selected_titles')
+        username = request.form.get('username', '').strip()
+        orcid_input = request.form.get('orcidInput')
+
+        if not orcid_input or not self._validate_orcid_id(orcid_input):
+            flash('Invalid or missing ORCID ID.', 'error')
+            return redirect(url_for('orcid_works_search'))
+
+        if username and not re.match(r"^(n/a|[a-zA-Zà-ÿ.' -]{2,100})$", username, re.IGNORECASE):
+            flash('Invalid characters in name or name too long/short.', 'error')
+            return redirect(url_for('orcid_works_search'))
+
+        try:
+            with self.app.app_context():
+                user = User.query.filter_by(orcid=orcid_input).first()
+                if not user:
+                    user_name_to_save = username if username else "Name not provided"
+                    user = User(orcid=orcid_input, name=user_name_to_save)
+                    db.session.add(user)
+                elif username and user.name != username:
+                    user.name = username
+
+                saved_count = 0
+                for title in selected_titles:
+                    record = Record(title=title, type='funding', orcid=orcid_input, users=user)
+                    db.session.add(record)
+                    saved_count += 1
+
+                if saved_count > 0:
+                    db.session.commit()
+                    logging.debug(f'{saved_count} funding record(s) saved successfully!', 'success')
+                else:
+                    logging.debug("No new fundings were selected or saved.")
+
+        except Exception as e:
+            db.session.rollback()
+            flash('An error occurred while saving the funding records. Please try again.', 'error')
             return redirect(url_for('orcid_works_search'))
 
         return redirect(url_for('home'))
@@ -572,52 +614,6 @@ class OrcidApp(BaseFlaskApp):
 
         flash(f"Successfully logged in with ORCID {orcid_id}.", "success")
         return redirect(url_for('get_orcid_works_data'))
-
-    def process_fundings_form(self):
-        selected_titles = request.form.getlist('selected_titles')
-        username = request.form.get('username', '').strip()
-        orcid_input = request.form.get('orcidInput')
-
-        if not orcid_input or not self._validate_orcid_id(orcid_input):
-            flash('Invalid or missing ORCID ID.', 'error')
-            return redirect(url_for('orcid_fundings_search'))
-
-        if username and not re.match(r"^[A-Za-zÀ-ÖØ-öø-ÿ.'\- ]{2,100}$", username):
-            flash('Invalid characters in name or name too long/short.', 'error')
-            return redirect(url_for('orcid_fundings_search'))
-
-        if not selected_titles:
-            flash('No fundings selected to save.', 'warning')
-            return redirect(url_for('orcid_fundings_search'))
-
-        try:
-            with self.app.app_context():
-                user = User.query.filter_by(orcid=orcid_input).first()
-                if not user:
-                    user_name_to_save = username if username else "Name not provided"
-                    user = User(orcid=orcid_input, name=user_name_to_save)
-                    db.session.add(user)
-                elif username and user.name != username:
-                    user.name = username
-
-                saved_count = 0
-                for title in selected_titles:
-                    record = Record(title=title, type='funding', orcid=orcid_input, users=user)
-                    db.session.add(record)
-                    saved_count += 1
-
-                if saved_count > 0:
-                    db.session.commit()
-                    flash(f'{saved_count} funding record(s) saved successfully!', 'success')
-                else:
-                    flash('No new funding records were selected or saved.', 'info')
-
-        except Exception as e:
-            db.session.rollback()
-            flash('An error occurred while saving the funding records. Please try again.', 'error')
-            return redirect(url_for('orcid_fundings_search'))
-
-        return redirect(url_for('home'))
 
     def admin_login(self):
         form = AdminLoginForm()

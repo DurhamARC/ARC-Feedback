@@ -1,8 +1,8 @@
 {% extends "base.html" %}
-{% block title %}Results{% endblock %}
+{% block title %}Publications tab{% endblock %}
 {% block content %}
-
 <div class="container">
+    <meta name="viewport" content="width=device-width, initial-scale=1.2">
     <div class="header-section">
         <h2 class="page-title">Publications Selection</h2>
         <p class="page-subtitle">Please select the ones you have worked on using our ARC infrastructure</p>
@@ -93,10 +93,17 @@
         display: block;
         width: 60px;
         height: 3px;
-        background: linear-gradient(90deg, #68246D, #a6ce39);
+        background: repeating-linear-gradient(90deg, #a6ce39 0%, #68246D 50%, #a6ce39 100%);
+        background-size: 120px 100%;
         margin: 1rem auto 0;
         border-radius: 3px;
         opacity: 0.7;
+        animation: slide 4s linear infinite;
+    }
+
+    @keyframes slide {
+        0% { background-position: 0 0; }
+        100% { background-position: -120px 0; }
     }
 
     .form-input {
@@ -245,7 +252,7 @@
     }
 
     .btn-select-all {
-        background: linear-gradient(135deg, #6da0ff 0%, #a6beff 100%);
+        background: linear-gradient(135deg, #4c814c 0%, #4c814c 100%);
         color: white !important;
         box-shadow: 0 4px 15px rgba(109, 160, 255, 0.2);
     }
@@ -320,7 +327,7 @@
 
     document.querySelector('form').addEventListener('submit', (e) => {
         const nameInput = document.getElementById('username');
-        if (!/^[A-Za-z ]{2,50}$/.test(nameInput.value.trim())) {
+        if (!/^(N\/A|[A-Za-z ]{2,50})$/i.test(nameInput.value.trim())) {
             e.preventDefault();
             alert('Please enter a valid name (2-50 characters, letters and spaces only)');
         }
