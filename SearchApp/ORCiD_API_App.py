@@ -182,7 +182,7 @@ class OrcidApp(BaseFlaskApp):
             except requests.exceptions.RequestException as e:
                 return flash(f"Error: Request exception inside of fetch_orcid_token: {e}", "error")
         return _inner_fetch()
-
+    #Utilities start
     @handle_errors
     def get_access_token(self):
         token = self._fetch_orcid_token()
@@ -191,10 +191,15 @@ class OrcidApp(BaseFlaskApp):
         else:
             return jsonify({"error": "Failed to fetch token", "details": "Check server logs"}), 500
 
-    def _validate_orcid_id(self, orcid_id):
+    def validate_orcid_id(self, orcid_id):
         pattern = r'^\d{4}-\d{4}-\d{4}-\d{3}[\dX]$'
         return re.match(pattern, orcid_id.strip()) is not None
 
+    @handle_errors
+    def cache_fetcher(self, orcid_id):
+        return f"orcid_works_{orcid_id}"
+
+    #Utilities end
     @handle_errors
     def get_orcid_works_data(self):
         self._limiter.limit("10 per minute")(lambda: None)
@@ -213,7 +218,7 @@ class OrcidApp(BaseFlaskApp):
         elif request.method == 'POST':
             orcid_id = request.form.get('orcidInput')
             source = 'form'
-            if not self._validate_orcid_id(orcid_id):
+            if not self.validate_orcid_id(orcid_id):
                 flash("Invalid ORCiD format submitted. Use XXXX-XXXX-XXXX-XXXX.", "error")
                 return redirect(url_for('orcid_works_search'))
         else:
@@ -231,7 +236,8 @@ class OrcidApp(BaseFlaskApp):
             return render_template('works_results.html',
                                    unique_titles=cached_data.get('titles', []),
                                    username=username,
-                                   orcidInput=orcid_id)
+                                   orcidInput=orcid_id,
+                                   orcidID = session['orcid_id'])
         
         url = f'https://pub.orcid.org/v3.0/{orcid_id}/works'
         headers = {
@@ -289,7 +295,7 @@ class OrcidApp(BaseFlaskApp):
             return render_template('works_results.html',
                                    unique_titles=unique_titles,
                                    username=name,
-                                   orcidInput=orcid_id)
+                                   orcidID = session['orcid_id'])
 
         except requests.exceptions.HTTPError as e:
             status_code = e.response.status_code
@@ -331,23 +337,23 @@ class OrcidApp(BaseFlaskApp):
             flash("Could not authenticate with the ORCID service at this time. Please try again later.", "error")
             return redirect(url_for('orcid_works_search'))
 
-        cache_key = f"orcid_works_{orcid_id}"
-        cached_data = self._cache.get(cache_key)
+        works_cache_key = self.cache_fetcher(orcid_id)
+        fundings_cache_key = f"orcid_fundings_{orcid_id}"
 
-        cache_key_fundings = f"orcid_fundings_{orcid_id}"
-        cached_data_fundings = self._cache.get(cache_key_fundings)
+        cached_data_works = self._cache.get(works_cache_key)
+        cached_data_fundings = self._cache.get(fundings_cache_key)
 
-        if cached_data and cached_data_fundings:
+        if works_cache_key and cached_data_fundings:
             return render_template(
                 'fundings_results.html',
                 unique_titles=cached_data_fundings.get('titles', []),
-                username=cached_data.get('name', ''),
+                username=cached_data_works.get('name', ''),
                 orcidInput=orcid_id
             )
-        elif not cached_data or cached_data_fundings:
+        elif not works_cache_key or cached_data_fundings:
             flash("Could not fetch cached data", "error")
             return redirect(url_for("orcid_works_search"))
-        
+
         url = f'https://pub.orcid.org/v3.0/{orcid_id}/fundings'
         headers = {
             'Accept': 'application/vnd.orcid+xml',
@@ -383,8 +389,8 @@ class OrcidApp(BaseFlaskApp):
                 threshold = (len(all_source_names) * 0.75) if all_source_names else 0
                 common = [n for n, c in counts.items() if c >= threshold]
                 name = common[0] if common else (all_source_names[0] if all_source_names else '')
-            else:
-                name = cached_data.get('name', '')
+            elif cached_data_works:
+                name = cached_data_works.get('name', '')
                 
             titles = [
                 t.text for t in root.findall('.//funding:title/common:title', namespaces)
@@ -396,7 +402,7 @@ class OrcidApp(BaseFlaskApp):
                 normalized = {normalise_title(t): t for t in titles}
                 unique_titles = list(normalized.values())
 
-            self._cache.set(cache_key, {'titles': unique_titles, 'name': name}, timeout=120)
+            self._cache.set(works_cache_key, {'titles': unique_titles, 'name': name}, timeout=120)
 
             return render_template(
                 'fundings_results.html',
@@ -412,7 +418,8 @@ class OrcidApp(BaseFlaskApp):
                     f"No funding found for ORCID {orcid_id}, or the ORCID ID itself could not be found.",
                     "info"
                 )
-                self._cache.delete(cache_key)
+                self._cache.delete(works_cache_key)
+                self._cache.delete(fundings_cache_key)
                 return render_template(
                     'fundings_results.html',
                     unique_titles=[],
@@ -445,7 +452,7 @@ class OrcidApp(BaseFlaskApp):
         username = request.form.get('username', '').strip()
         orcid_input = request.form.get("orcidInput")
 
-        if not orcid_input or not self._validate_orcid_id(orcid_input):
+        if not orcid_input or not self.validate_orcid_id(orcid_input):
              flash('Invalid or missing ORCID ID.', 'error')
              return redirect(url_for('orcid_works_search'))
 
@@ -491,7 +498,7 @@ class OrcidApp(BaseFlaskApp):
         username = request.form.get('username', '').strip()
         orcid_input = request.form.get('orcidInput')
 
-        if not orcid_input or not self._validate_orcid_id(orcid_input):
+        if not orcid_input or not self.validate_orcid_id(orcid_input):
             flash('Invalid or missing ORCID ID.', 'error')
             return redirect(url_for('orcid_works_search'))
 
@@ -611,8 +618,7 @@ class OrcidApp(BaseFlaskApp):
              session['user_name'] = user_name
         session.permanent = True
         session.modified = True
-
-        flash(f"Successfully logged in with ORCID {orcid_id}.", "success")
+        
         return redirect(url_for('get_orcid_works_data'))
 
     def admin_login(self):

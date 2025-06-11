@@ -2,25 +2,32 @@
 {% block title %}Publications tab{% endblock %}
 {% block content %}
 <div class="container">
-    <meta name="viewport" content="width=device-width, initial-scale=1.2">
+    <meta name="viewport" content="width=device-width, initial-scale=0.8, maximum-scale=1.5, user-scalable=yes">
     <div class="header-section">
         <h2 class="page-title">Publications Selection</h2>
-        <p class="page-subtitle">Please select the ones you have worked on using our ARC infrastructure</p>
+        <p class="page-subtitle">Select work created with ARC's infrastructure</p>
     </div>
     
     <form action="/process/publications" method="post" class="selection-form">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-        <div class="form-group">
-            <label for="username" class="form-label"><em>Your Full Name:</em></label>
-            <input type="text" name="username" id="username"
-                   class="form-input" value="{{ username }}"
-                   readonly/>
-                    
-            <input type="hidden" name="orcidInput" value="{{ orcidInput }}"/>
-        </div>
-        <div class="div">
-        </div>
         <div class="selection-list">
+            <div class="form-group">
+                <div class="field">
+                  <label for="username" class="form-label"><em>Full Name</em></label>
+                  <input type="text" name="username" id="username"
+                         class="form-input" value="{{ username }}"
+                         readonly/>
+                </div>
+                <div class="field orcid-field">
+                  <label for="orcidID" class="form-label"><em>ORCiD ID</em></label>
+                  <input type="text" name="orcidID" id="orcidID"
+                         class="form-input" value="{{ orcidID }}"
+                         readonly/>
+                  <input type="hidden" name="orcidInput" value="{{ orcidInput }}"/>
+                </div>
+            </div>
+            <div class="div">
+            </div>
             {% for title in unique_titles %}
                 <div class="form-check">
                     <label class="checkbox-label">
@@ -32,6 +39,7 @@
                 </div>
             {% endfor %}
         </div>
+
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 <div class="alert-messages">
@@ -47,7 +55,7 @@
         <div class="form-actions">
             <button type="button" class="btn btn-select-all">Select/Deselect all</button>
             <button type="submit" class="btn btn-primary" onclick="this.classList.add('loading')">
-                <span class="btn-text">Submit Selections</span>
+                <span class="btn-text">Submit selection</span>
             </button>
         </div>
     </form>
@@ -107,15 +115,18 @@
     }
 
     .form-input {
-    padding: 0.75rem;
-    border: 2px solid #e0e0e0;
-    border-radius: 12px;
-    width: 100%;
-    max-width: 300px;
-    transition: all 0.3s ease;
-    font-size: 1rem;
-    user-select: none;
-    cursor: default;
+        padding: 0.20rem;
+        border: 2px solid #e0e0e0;
+        color: #333;
+        border-radius: 20px;
+        width: 100%;
+        max-width: 300px;
+        transition: all 0.3s ease;
+        font-size: 1rem;
+        font-style: italic;
+        user-select: none;
+        cursor: default;
+        text-align: center;
     }   
 
     .form-input:focus {
@@ -127,11 +138,24 @@
 
     .selection-list {
         max-height: 60vh;
+        min-height: 30vh;
         overflow-y: auto;
         margin: 2rem 0;
         border: 2px solid #f0f0f0;
         padding: 1.5rem;
-        border-radius: 15px;
+        border-radius: 10.52px;
+        background: white;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+    }
+
+    .simple-list {
+        max-height: 10vh;
+        min-height: 0vh;
+        overflow-y: auto;
+        margin: 2rem 0;
+        border: 2px solid #f0f0f0;
+        padding: 1.5rem;
+        border-radius: 10.52px;
         background: white;
         box-shadow: 0 4px 20px rgba(0,0,0,0.05);
     }
@@ -140,7 +164,7 @@
         margin: 0.75rem 0;
         padding: 1rem;
         background: #f9f9f9;
-        border-radius: 12px;
+        border-radius: 15px;
         transition: all 0.3s ease;
         animation: fadeIn 0.5s ease-out;
         animation-fill-mode: both;
@@ -183,7 +207,7 @@
         min-width: 22px;
         background-color: white;
         border: 2px solid #68246D;
-        border-radius: 5px;
+        border-radius: 3.85px;
         margin-right: 1rem;
         transition: all 0.3s ease;
         flex-shrink: 0;
@@ -229,11 +253,11 @@
     }
 
     .btn {
-        padding: 0.75rem 1.5rem;
+        padding: 1rem 2.5rem;
         border: none;
-        border-radius: 12px;
+        border-radius: 20px;
         cursor: pointer;
-        font-size: 1rem;
+        font-size: 0.8rem;
         font-weight: 600;
         transition: all 0.3s ease;
         position: relative;
@@ -244,6 +268,9 @@
         background: linear-gradient(135deg, #68246D 0%, #8a3a8f 100%);
         color: white;
         box-shadow: 0 4px 15px rgba(104, 36, 109, 0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
 
     .btn-primary:hover {
@@ -255,6 +282,9 @@
         background: linear-gradient(135deg, #4c814c 0%, #4c814c 100%);
         color: white !important;
         box-shadow: 0 4px 15px rgba(109, 160, 255, 0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
 
     .btn-select-all:hover {
@@ -290,6 +320,7 @@
 
     .form-label {
         margin-bottom: 0.25rem;
+        margin-left: 4.7rem;
         display: block;
     }
 
