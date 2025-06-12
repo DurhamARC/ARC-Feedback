@@ -302,8 +302,8 @@ class OrcidApp(BaseFlaskApp):
             if status_code == 404:
                 flash(f"Could not find an ORCID record matching {orcid_id}. Please check the ID.", "error")
             elif status_code == 401 or status_code == 403:
-                 flash("Authorization error with ORCID. Please check credentials or contact support.", "error")
-                 self._cache.delete_memoized(self._fetch_orcid_token)
+                flash("Authorization error with ORCID. Please check credentials or contact support.", "error")
+                self._cache.delete_memoized(self._fetch_orcid_token)
             else:
                 flash(f"Error fetching data from ORCID (Code: {status_code}). Please try again later.", "error")
             return redirect(url_for('orcid_works_search'))

@@ -2,7 +2,6 @@
 {% block title %}Publications tab{% endblock %}
 {% block content %}
 <div class="container">
-    <meta name="viewport" content="width=device-width, initial-scale=0.8, maximum-scale=1.5, user-scalable=yes">
     <div class="header-section">
         <h2 class="page-title">Publications Selection</h2>
         <p class="page-subtitle">Select work created with ARC's infrastructure</p>
@@ -55,7 +54,7 @@
         <div class="form-actions">
             <button type="button" class="btn btn-select-all">Select/Deselect all</button>
             <button type="submit" class="btn btn-primary" onclick="this.classList.add('loading')">
-                <span class="btn-text">Submit selection</span>
+                <span class="btn-text">Submit</span>
             </button>
         </div>
     </form>
@@ -68,8 +67,9 @@
         padding: 2rem;
         animation: fadeIn 0.5s ease-out;
         background: white;
-        border-radius: 20px;
+        border-radius: 2rem;
         box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+        zoom: 95%;
     }
 
     .page-title {
@@ -143,7 +143,7 @@
         margin: 2rem 0;
         border: 2px solid #f0f0f0;
         padding: 1.5rem;
-        border-radius: 10.52px;
+        border-radius: 1.7rem;
         background: white;
         box-shadow: 0 4px 20px rgba(0,0,0,0.05);
     }
@@ -164,10 +164,17 @@
         margin: 0.75rem 0;
         padding: 1rem;
         background: #f9f9f9;
-        border-radius: 15px;
+        border-radius: 1.5rem;
         transition: all 0.3s ease;
         animation: fadeIn 0.5s ease-out;
         animation-fill-mode: both;
+    }
+
+    .checkbox-label {
+        display: flex;
+        align-items: center;
+        cursor: pointer;
+        position: relative;
     }
 
     @keyframes fadeIn {
@@ -177,7 +184,6 @@
 
     .form-check:hover {
         background: #f0f0f0;
-        transform: translateY(-2px);
     }
 
     .form-check:nth-child(1) { animation-delay: 0.1s; }
@@ -185,13 +191,6 @@
     .form-check:nth-child(3) { animation-delay: 0.3s; }
     .form-check:nth-child(4) { animation-delay: 0.4s; }
     .form-check:nth-child(5) { animation-delay: 0.5s; }
-
-    .checkbox-label {
-        display: flex;
-        align-items: center;
-        cursor: pointer;
-        position: relative;
-    }
 
     .checkbox-input {
         position: absolute;
@@ -207,7 +206,7 @@
         min-width: 22px;
         background-color: white;
         border: 2px solid #68246D;
-        border-radius: 3.85px;
+        border-radius: 9999px;
         margin-right: 1rem;
         transition: all 0.3s ease;
         flex-shrink: 0;
@@ -255,7 +254,7 @@
     .btn {
         padding: 1rem 2.5rem;
         border: none;
-        border-radius: 20px;
+        border-radius: 9999px;
         cursor: pointer;
         font-size: 0.8rem;
         font-weight: 600;
@@ -274,22 +273,20 @@
     }
 
     .btn-primary:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 6px 20px rgba(104, 36, 109, 0.3);
+        background: linear-gradient(135deg, #5f3863 0%, #792b7c 100%);
     }
 
     .btn-select-all {
         background: linear-gradient(135deg, #4c814c 0%, #4c814c 100%);
         color: white !important;
-        box-shadow: 0 4px 15px rgba(109, 160, 255, 0.2);
+        box-shadow: 0 4px 15px #4c814c76;
         display: flex;
         align-items: center;
         justify-content: center;
     }
 
     .btn-select-all:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 6px 20px rgba(109, 160, 255, 0.3);
+        background: linear-gradient(135deg, #4c634c 0%, #3b663b 100%);
         color: white !important;
     }
 
@@ -358,9 +355,9 @@
 
     document.querySelector('form').addEventListener('submit', (e) => {
         const nameInput = document.getElementById('username');
-        if (!/^(N\/A|[A-Za-z ]{2,50})$/i.test(nameInput.value.trim())) {
+        if (!/^(N\/A|[A-Za-z ]{2,63})$/i.test(nameInput.value.trim())) {
             e.preventDefault();
-            alert('Please enter a valid name (2-50 characters, letters and spaces only)');
+            alert('Please enter a valid name (2-63 characters, letters and spaces only)');
         }
     });
 </script>
