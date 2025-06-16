@@ -21,15 +21,23 @@
 }
 
 body.dark-mode {
-    --primary-color: #a0a0a0;
-    --body-bg: #2c2c2c;
-    --card-bg: #3c3c3c;
-    --navbar-bg: #3c3c3c;
-    --text-color: #e0e0e0;
-    --text-light: #a0a0a0;
-    --selection-bg: #99599f;
+    --primary-color: #9d5ba2;
+    --primary-hover: #b46bb9;
+    --body-bg: #1a1a1a;
+    --card-bg: #2d2d2d;
+    --navbar-bg: #2d2d2d;
+    --text-color: #e8e8e8;
+    --text-light: #b8b8b8;
+    --selection-bg: #9d5ba2;
     --selection-text: #ffffff;
     --button-text: #ffffff;
+    --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    --card-shadow-hover: 0 8px 25px rgba(0, 0, 0, 0.4);
+    --input-focus: 0 0 8px rgba(157, 91, 162, 0.4);
+    --gradient-primary: linear-gradient(135deg, #9d5ba2 0%, #7a4580 100%);
+    --gradient-secondary: linear-gradient(135deg, #a6ce39 0%, #8bb82e 100%);
+    --error-bg: #3d1f1f;
+    --error-text: #ffb3b3;
 }
 
 ::-moz-selection {
