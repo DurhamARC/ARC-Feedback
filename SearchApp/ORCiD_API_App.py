@@ -140,7 +140,8 @@ class OrcidApp(BaseFlaskApp):
         
     def _register_routes(self):
         self.app.route("/")(self.home)
-        self.app.route("/publications/search")(self.orcid_works_search)
+        self.app.route("/publications/sso")(self.orcid_works_search)
+        self.app.route("/about")(self.about)
         self.app.route('/publications', methods=['GET', 'POST'])(self.get_orcid_works_data)
         self.app.route('/fundings', methods=['GET', 'POST'])(self.get_orcid_fundings_data)
         self.app.route('/api/token', methods=['GET', 'POST'])(self.get_access_token)
@@ -162,6 +163,11 @@ class OrcidApp(BaseFlaskApp):
 
     @handle_errors
     def orcid_works_search(self):
+        return render_template("orcid_id_works.html", enable_orcid_login=os.getenv('ENABLE_ORCID_LOGIN', 'true').lower() in ('true'), debug_mode=current_app.debug)
+
+    # About page !
+    @handle_errors
+    def about(self):
         return render_template("orcid_id_works.html", enable_orcid_login=os.getenv('ENABLE_ORCID_LOGIN', 'true').lower() in ('true'), debug_mode=current_app.debug)
 
     def _fetch_orcid_token(self):

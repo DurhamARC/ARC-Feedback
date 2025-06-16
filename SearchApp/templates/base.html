@@ -10,7 +10,6 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
 </head>
 <body>
-
     <nav class="navbar navbar-expand-lg navbar-light">
         <div class="container-fluid">
             <span class="navbar-brand">ARC Feedback</span>
@@ -26,14 +25,50 @@
                         href="/">Home</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {% if page == 'publications' %} active {% endif %}" 
-                        href="/publications/search">Publications</a>
+                        <a class="nav-link {% if page == 'about' %} active {% endif %}" 
+                        href="/about">About</a>
+                    </li>
+                </ul>
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="settingsDropdown" role="button" 
+                           data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-cog"></i>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="settingsDropdown">
+                            <li>
+                                <div class="form-check form-switch px-3">
+                                    <input class="input" type="checkbox" id="darkModeSwitch">
+                                    <label class="label" for="darkModeSwitch">Dark Mode</label>
+                                </div>
+                            </li>
+                        </ul>
                     </li>
                 </ul>
             </div>
         </div>
     </nav>
-
+   <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const darkModeSwitch = document.getElementById('darkModeSwitch');
+        const currentTheme = localStorage.getItem('theme');
+        
+        if (currentTheme === 'dark') {
+            document.body.classList.add('dark-mode');
+            darkModeSwitch.checked = true;
+        }
+        
+        darkModeSwitch.addEventListener('change', function() {
+            if (this.checked) {
+                document.body.classList.add('dark-mode');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                document.body.classList.remove('dark-mode');
+                localStorage.setItem('theme', 'light');
+            }
+        });
+    });
+    </script>
     <main class="main-content">
         {% block content %}
         {% endblock %}

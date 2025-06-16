@@ -69,8 +69,9 @@
 
   selectAllBtn.addEventListener('click', () => {
     const checkboxes = document.querySelectorAll('.checkbox-input');
-    const currentState = !!checkboxes[0]?.checked;
-    checkboxes.forEach(cb => cb.checked = !currentState);
+    const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+    const newState = !allChecked;
+    checkboxes.forEach(cb => cb.checked = newState);
   });
 
   form.addEventListener('submit', (e) => {
@@ -106,33 +107,76 @@
   }
 </script>
 
-
 <style>
+    :root {
+        --primary-color: #68246D;
+        --container-bg: white;
+        --list-bg: white;
+        --form-check-bg: #f9f9f9;
+        --checkbox-custom-bg: white;
+        --text-color: #333;
+        --input-color: #333;
+        --input-background: #f9f9f9;
+        --text-light: #555;
+        --border-color: #e0e0e0;
+        --alert-error-bg: #ffe6e6;
+        --alert-error-text: #3d3d3d;
+        --alert-error-border: #cc0000;
+        --alert-success-bg: #e6ffe6;
+        --alert-success-text: #4c814c;
+        --alert-success-border: #68246D;
+        --checked-color: #68246D;
+        --form-check-hover-bg: #f0f0f0;
+        --hovering: #5f3863;
+    }
+
+    body.dark-mode {
+        --primary-color: #a0a0a0;
+        --container-bg: #3c3c3c;
+        --list-bg: #3c3c3c;
+        --form-check-bg: #4c4c4c;
+        --checkbox-custom-bg: #4c4c4c;
+        --text-color: #e0e0e0;
+        --input-background: #adadad;
+        --input-color: #3c3c3c;
+        --text-light: #a0a0a0;
+        --border-color: #555;
+        --alert-error-bg: #442222;
+        --alert-error-text: #ffcccc;
+        --alert-error-border: #ff5555;
+        --alert-success-bg: #224422;
+        --alert-success-text: #ccffcc;
+        --alert-success-border: #a6ce39;
+        --checked-color: #b3cd6c;
+        --form-check-hover-bg: #555;
+        --hovering: #5d5d5d;
+    }
+
     .container {
         max-width: 800px;
         margin: 2rem auto;
         padding: 2rem;
         animation: fadeIn 0.5s ease-out;
-        background: white;
+        background: var(--container-bg);
         border-radius: 2rem;
         box-shadow: 0 10px 30px rgba(0,0,0,0.05);
         zoom: 95%;
     }
 
     .page-title {
-        color: #68246D;
+        color: var(--primary-color);
         margin-bottom: 1.5rem;
         padding: 10px;
         font-size: 2rem;
         text-align: center;
-        background: linear-gradient(135deg, #68246D 0%, #8a3a8f 100%);
+        background: linear-gradient(135deg, var(--primary-color) 0%, #8a3a8f 100%);
         -webkit-background-clip: text;
         background-clip: text;
         color: transparent;
     }
 
     .page-subtitle {
-        color: #555;
+        color: var(--text-light);
         font-size: 1.15rem;
         margin: 0.75rem auto 1.5rem;
         line-height: 1.6;
@@ -163,8 +207,9 @@
 
     .form-input {
         padding: 0.20rem;
-        border: 2px solid #e0e0e0;
-        color: #333;
+        border: 2px solid var(--border-color);
+        background-color: var(--input-background);
+        color: var(--input-color);
         border-radius: 20px;
         width: 100%;
         max-width: 300px;
@@ -177,7 +222,7 @@
     }   
 
     .form-input:focus {
-        border-color: #68246D;
+        border-color: var(--primary-color);
         outline: none;
         box-shadow: 0 0 8px rgba(104, 36, 109, 0.2);
         cursor: default;
@@ -188,10 +233,10 @@
         min-height: 30vh;
         overflow-y: auto;
         margin: 2rem 0;
-        border: 2px solid #f0f0f0;
+        border: 2px solid var(--border-color);
         padding: 1.5rem;
         border-radius: 1.7rem;
-        background: white;
+        background: var(--list-bg);
         box-shadow: 0 4px 20px rgba(0,0,0,0.05);
     }
 
@@ -200,17 +245,17 @@
         min-height: 0vh;
         overflow-y: auto;
         margin: 2rem 0;
-        border: 2px solid #f0f0f0;
+        border: 2px solid var(--border-color);
         padding: 1.5rem;
         border-radius: 10.52px;
-        background: white;
+        background: var(--list-bg);
         box-shadow: 0 4px 20px rgba(0,0,0,0.05);
     }
     
     .form-check {
         margin: 0.75rem 0;
         padding: 1rem;
-        background: #f9f9f9;
+        background: var(--form-check-bg);
         border-radius: 1.5rem;
         transition: all 0.3s ease;
         animation: fadeIn 0.5s ease-out;
@@ -230,7 +275,7 @@
     }
 
     .form-check:hover {
-        background: #f0f0f0;
+        background: var(--form-check-hover-bg);
     }
 
     .form-check:nth-child(1) { animation-delay: 0.1s; }
@@ -251,8 +296,8 @@
         height: 22px;
         width: 22px;
         min-width: 22px;
-        background-color: white;
-        border: 2px solid #68246D;
+        background-color: var(--checkbox-custom-bg);
+        border: 2px solid var(--primary-color);
         border-radius: 9999px;
         margin-right: 1rem;
         transition: all 0.3s ease;
@@ -260,7 +305,7 @@
     }
 
     .checkbox-input:checked ~ .checkbox-custom {
-        background-color: #68246D;
+        background-color: var(--checked-color);
     }
 
     .checkbox-custom::after {
@@ -282,12 +327,12 @@
 
     .checkbox-title {
         font-size: 1.1rem;
-        color: #333;
+        color: var(--text-color);
         transition: all 0.3s ease;
     }
 
     .checkbox-input:checked ~ .checkbox-title {
-        color: #68246D;
+        color: var(--checked-color);
         font-weight: 500;
     }
 
@@ -311,7 +356,7 @@
     }
 
     .btn-primary {
-        background: linear-gradient(135deg, #68246D 0%, #8a3a8f 100%);
+        background: linear-gradient(135deg, var(--primary-color) 0%, #8a3a8f 100%);
         color: white;
         box-shadow: 0 4px 15px rgba(104, 36, 109, 0.2);
         display: flex;
@@ -320,7 +365,7 @@
     }
 
     .btn-primary:hover {
-        background: linear-gradient(135deg, #5f3863 0%, #792b7c 100%);
+        background: linear-gradient(135deg, var(--hovering) 0%, #792b7c 100%);
     }
 
     .btn-select-all {
@@ -381,32 +426,15 @@
     }
 
     .alert-error {
-        background: #ffe6e6;
-        color: #cc0000;
-        border-left: 5px solid #cc0000;
+        background: var(--alert-error-bg);
+        color: var(--alert-error-text);
+        border-left: 5px solid var(--alert-error-border);
     }
 
     .alert-success {
-        background: #e6ffe6;
-        color: #4c814c;
-        border-left: 5px solid #68246D;
+        background: var(--alert-success-bg);
+        color: var(--alert-success-text);
+        border-left: 5px solid var(--alert-success-border);
     }
 </style>
-
-<script>
-    document.querySelector('.btn-select-all').addEventListener('click', () => {
-        const checkboxes = document.querySelectorAll('.checkbox-input');
-        const currentState = checkboxes[0]?.checked || false;
-        checkboxes.forEach(checkbox => checkbox.checked = !currentState);
-    });
-
-    document.querySelector('form').addEventListener('submit', (e) => {
-        const nameInput = document.getElementById('username');
-        if (!/^(N\/A|[A-Za-z ]{2,63})$/i.test(nameInput.value.trim())) {
-            e.preventDefault();
-            alert('Please enter a valid name (2-63 characters, letters and spaces only)');
-        }
-    });
-</script>
-
 {% endblock %}
