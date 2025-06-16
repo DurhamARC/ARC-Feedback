@@ -290,7 +290,7 @@ class OrcidApp(BaseFlaskApp):
             unique_titles = list(normalised_titles.values())
 
             cache_data = {'titles': unique_titles, 'name': name}
-            self._cache.set(cache_key, cache_data, timeout=120)
+            self._cache.set(cache_key, cache_data, timeout=30)
 
             return render_template('works_results.html',
                                    unique_titles=unique_titles,
@@ -348,7 +348,8 @@ class OrcidApp(BaseFlaskApp):
                 'fundings_results.html',
                 unique_titles=cached_data_fundings.get('titles', []),
                 username=cached_data_works.get('name', ''),
-                orcidInput=orcid_id
+                orcidInput=orcid_id,
+                orcidID = session['orcid_id']
             )
         elif not works_cache_key or cached_data_fundings:
             flash("Could not fetch cached data", "error")
@@ -402,13 +403,14 @@ class OrcidApp(BaseFlaskApp):
                 normalized = {normalise_title(t): t for t in titles}
                 unique_titles = list(normalized.values())
 
-            self._cache.set(works_cache_key, {'titles': unique_titles, 'name': name}, timeout=120)
+            self._cache.set(works_cache_key, {'titles': unique_titles, 'name': name}, timeout=30)
 
             return render_template(
                 'fundings_results.html',
                 unique_titles=unique_titles,
                 username=name,
-                orcidInput=orcid_id
+                orcidInput=orcid_id,
+                orcidID = session['orcid_id']
             )
 
         except requests.exceptions.HTTPError as e:
@@ -450,25 +452,27 @@ class OrcidApp(BaseFlaskApp):
     def process_works_form(self):
         selected_titles = request.form.getlist('selected_titles')
         username = request.form.get('username', '').strip()
-        orcid_input = request.form.get("orcidInput")
 
-        if not orcid_input or not self.validate_orcid_id(orcid_input):
-             flash('Invalid or missing ORCID ID.', 'error')
-             return redirect(url_for('orcid_works_search'))
-
-        if username and not re.match(r"^(n/a|[a-zA-Zà-ÿ.' -]{2,100})$", username, re.IGNORECASE):
-             flash('Invalid characters in name or name too long/short.', 'error')
-             return redirect(url_for('orcid_works_search'))
-        
         if not selected_titles:
-             flash('No publications selected to save.', 'warning')
-             return redirect(url_for('orcid_works_search'))
+            pass
+
+        if not os.getenv('ENABLE_ORCID_LOGIN'):
+            orcid_input = request.form.get("orcidInput", "").strip()
+            if not orcid_input:
+                flash('Invalid or missing ORCID ID.', 'error')
+                return redirect(url_for('orcid_works_search'))
+        else:
+            orcid_input = request.form.get("orcidID", "").strip()
+
+        if username and not re.match(r"^(n/a|[a-zA-Zà-ÿ.' \-]{2,100})$", username, re.IGNORECASE):
+            flash('Invalid characters in name or name too long/short.', 'error')
+            return redirect(url_for('orcid_works_search'))
 
         try:
             with self.app.app_context():
                 user = User.query.filter_by(orcid=orcid_input).first()
                 if not user:
-                    user_name_to_save = username if username else "Name not provided"
+                    user_name_to_save = username or "Name not provided"
                     user = User(orcid=orcid_input, name=user_name_to_save)
                     db.session.add(user)
                 elif username and user.name != username:
@@ -476,18 +480,24 @@ class OrcidApp(BaseFlaskApp):
 
                 saved_count = 0
                 for title in selected_titles:
-                    record = Record(title=title, type='publication', orcid=orcid_input, users=user)
+                    record = Record(
+                        title=title,
+                        type='publication',
+                        orcid=orcid_input,
+                        users=user
+                    )
                     db.session.add(record)
                     saved_count += 1
 
-                if saved_count > 0:
+                if saved_count:
                     db.session.commit()
                     flash(f'{saved_count} publication(s) saved successfully!', 'success')
                 else:
-                    logging.debug("No new publications were selected or saved.")
+                    flash('No new publications were saved.', 'error')
 
         except Exception as e:
             db.session.rollback()
+            logging.exception("Error saving publications:")
             flash('An error occurred while saving the publications. Please try again.', 'error')
             return redirect(url_for('orcid_works_search'))
 
@@ -496,11 +506,17 @@ class OrcidApp(BaseFlaskApp):
     def process_fundings_form(self):
         selected_titles = request.form.getlist('selected_titles')
         username = request.form.get('username', '').strip()
-        orcid_input = request.form.get('orcidInput')
 
-        if not orcid_input or not self.validate_orcid_id(orcid_input):
-            flash('Invalid or missing ORCID ID.', 'error')
-            return redirect(url_for('orcid_works_search'))
+        if not selected_titles:
+            pass
+
+        if not os.getenv('ENABLE_ORCID_LOGIN'):
+            orcid_input = request.form.get("orcidInput")
+            if not orcid_input:
+                flash('Invalid or missing ORCID ID.', 'error')
+                return redirect(url_for('orcid_works_search'))
+        else:
+            orcid_input = request.form.get("orcidID", "").strip()
 
         if username and not re.match(r"^(n/a|[a-zA-Zà-ÿ.' -]{2,100})$", username, re.IGNORECASE):
             flash('Invalid characters in name or name too long/short.', 'error')

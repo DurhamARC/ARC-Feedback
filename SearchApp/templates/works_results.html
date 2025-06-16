@@ -22,7 +22,9 @@
                   <input type="text" name="orcidID" id="orcidID"
                          class="form-input" value="{{ orcidID }}"
                          readonly/>
-                  <input type="hidden" name="orcidInput" value="{{ orcidInput }}"/>
+                {% if not enable_orcid_login %}
+                <input type="hidden" name="orcidInput" value="{{ orcidInput }}"/>
+                {% endif %}  
                 </div>
             </div>
             <div class="div">
@@ -33,7 +35,7 @@
                         <input type="checkbox" name="selected_titles" 
                                value="{{ title }}" class="checkbox-input">
                         <span class="checkbox-custom"></span>
-                        <span class="publication-title">{{ title }}</span>
+                        <span class="checkbox-title">{{ title }}</span>
                     </label>
                 </div>
             {% endfor %}
@@ -59,6 +61,51 @@
         </div>
     </form>
 </div>
+
+<script>
+  const form = document.querySelector('form');
+  const selectAllBtn = document.querySelector('.btn-select-all');
+
+  selectAllBtn.addEventListener('click', () => {
+    const checkboxes = document.querySelectorAll('.checkbox-input');
+    const currentState = !!checkboxes[0]?.checked;
+    checkboxes.forEach(cb => cb.checked = !currentState);
+  });
+
+  form.addEventListener('submit', (e) => {
+    const nameInput = document.getElementById('username');
+    if (!/^(N\/A|[A-Za-z ]{2,63})$/i.test(nameInput.value.trim())) {
+      e.preventDefault();
+      showError('Please enter a valid name (2-63 characters, letters and spaces only)');
+      return;
+    }
+
+    const checkboxes = Array.from(document.querySelectorAll('.checkbox-input'));
+    const anySelected = checkboxes.some(cb => cb.checked);
+
+    if (!anySelected) {
+      e.preventDefault();
+      showError('Please select at least one publication');
+      return;
+    }
+
+    this.classList.add('loading');
+  });
+
+  function showError(message) {
+    const existing = form.querySelector('.alert-messages');
+    if (existing) existing.remove();
+
+    const wrapper = document.createElement('div');
+    wrapper.classList.add('alert-messages');
+    wrapper.innerHTML = `<div class="alert alert-error">${message}</div>`;
+
+    const actions = form.querySelector('.form-actions');
+    form.insertBefore(wrapper, actions);
+  }
+</script>
+
+
 
 <style>
     .container {
@@ -233,13 +280,13 @@
         display: block;
     }
 
-    .publication-title {
+    .checkbox-title {
         font-size: 1.1rem;
         color: #333;
         transition: all 0.3s ease;
     }
 
-    .checkbox-input:checked ~ .publication-title {
+    .checkbox-input:checked ~ .checkbox-title {
         color: #68246D;
         font-weight: 500;
     }
