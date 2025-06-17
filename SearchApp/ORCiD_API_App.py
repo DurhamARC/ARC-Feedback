@@ -354,17 +354,14 @@ class OrcidApp(BaseFlaskApp):
         cached_data_works = self._cache.get(works_cache_key)
         cached_data_fundings = self._cache.get(fundings_cache_key)
 
-        if works_cache_key and cached_data_fundings:
+        if cached_data_fundings:
             return render_template(
                 'fundings_results.html',
                 unique_titles=cached_data_fundings.get('titles', []),
-                username=cached_data_works.get('name', ''),
+                username=cached_data_works.get('name', '') if cached_data_works else '',
                 orcidInput=orcid_id,
                 orcidID = session['orcid_id']
             )
-        elif not works_cache_key or cached_data_fundings:
-            flash("Could not fetch cached data", "error")
-            return redirect(url_for("orcid_works_search"))
 
         url = f'https://pub.orcid.org/v3.0/{orcid_id}/fundings'
         headers = {
@@ -414,7 +411,7 @@ class OrcidApp(BaseFlaskApp):
                 normalized = {normalise_title(t): t for t in titles}
                 unique_titles = list(normalized.values())
 
-            self._cache.set(works_cache_key, {'titles': unique_titles, 'name': name}, timeout=30)
+            self._cache.set(fundings_cache_key, {'titles': unique_titles, 'name': name}, timeout=30)
 
             return render_template(
                 'fundings_results.html',
