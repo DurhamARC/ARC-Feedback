@@ -2,46 +2,46 @@
 {% block title %}Fundings tab{% endblock %}
 {% block content %}
 <div class="container">
+    <a href="/" class="back-button" title="Go Back">
+        <span class="back-button-icon">←</span>
+    </a>
     <div class="header-section">
         <h2 class="page-title">Fundings Selection</h2>
         <p class="page-subtitle">Select fundings generated with ARC's infrastructure</p>
     </div>
-
+    
     <form action="/process/fundings" method="post" class="selection-form">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-        <div class="selection-list">
-            <div class="form-group">
-                <div class="field">
-                    <label for="username" class="form-label"><em>Full Name</em></label>
-                    <input type="text" name="username" id="username"
-                            class="form-input" value="{{ username }}"
-                            readonly/>
-                </div>
-                <div class="field orcid-field">
-                    <label for="orcidID" class="form-label"><em>ORCiD ID</em></label>
-                    <input type="text" name="orcidID" id="orcidID"
-                            class="form-input" value="{{ orcidID }}"
-                            readonly/>
+        <div class="info-list">
+            <div class="field">
+                <label for="username" class="form-label"><em>Full Name</em></label>
+                <input type="text" name="username" id="username"
+                        class="form-input" value="{{ username }}"
+                        readonly/>
+            </div>
+            <div class="field orcid-field">
+                <span><label for="orcidID" class="form-label"><em>ORCiD ID</em></label></span>
+                <input type="text" name="orcidID" id="orcidID"
+                        class="form-input" value="{{ orcidID }}"
+                        readonly/>
                 {% if not enable_orcid_login %}
                 <input type="hidden" name="orcidInput" value="{{ orcidInput }}"/>
                 {% endif %}  
-                </div>
             </div>
-            <div class="div">
-            </div>
-            <div class="selection-list">
+        </div>
+        <div class="selection-list">
             {% for title in unique_titles %}
                 <div class="form-check">
                     <label class="checkbox-label">
                         <input type="checkbox" name="selected_titles" 
-                            value="{{ title }}" class="checkbox-input">
+                               value="{{ title }}" class="checkbox-input">
                         <span class="checkbox-custom"></span>
                         <span class="checkbox-title">{{ title }}</span>
                     </label>
                 </div>
             {% endfor %}
-            </div>      
         </div>
+
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 <div class="alert-messages">
@@ -52,16 +52,16 @@
                     {% endfor %}
                 </div>
             {% endif %}
-        {% endwith %}
+        {% endwith %}   
+
         <div class="form-actions">
             <button type="button" class="btn btn-select-all">Select/Deselect all</button>
             <button type="submit" class="btn btn-primary" onclick="this.classList.add('loading')">
-                <span class="btn-text">Submit Selections</span>
+                <span class="btn-text">Submit</span>
             </button>
         </div>
     </form>
 </div>
-
 
 <script>
   const form = document.querySelector('form');
@@ -106,7 +106,6 @@
     form.insertBefore(wrapper, actions);
   }
 </script>
-
 <style>
     :root {
         --primary-color: #68246D;
@@ -160,7 +159,36 @@
         background: var(--container-bg);
         border-radius: 2rem;
         box-shadow: 0 10px 30px rgba(0,0,0,0.05);
-        zoom: 95%;
+        zoom: 90%;
+        position: relative;
+    }
+
+    .back-button {
+        position: absolute;
+        top: 1rem;
+        left: 1rem;
+        width: 40px;
+        height: 40px;
+        background: linear-gradient(135deg, var(--primary-color) 0%, #8a3a8f 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-decoration: none;
+        box-shadow: 0 4px 10px rgba(104, 36, 109, 0.2);
+        transition: all 0.3s ease;
+        z-index: 10;
+    }
+
+    .back-button:hover {
+        background: linear-gradient(135deg, var(--hovering) 0%, #792b7c 100%);
+    }
+
+    .back-button-icon {
+        color: white;
+        font-size: 1.5rem;
+        font-weight: bold;
+        margin-bottom: 0.3rem;
     }
 
     .page-title {
@@ -186,11 +214,11 @@
         animation: fadeIn 0.8s ease-out 0.3s forwards;
         opacity: 0;
     }
-
+    
     .page-subtitle::after {
         content: "";
         display: block;
-        width: 60px;
+        width: 80px;
         height: 3px;
         background: repeating-linear-gradient(90deg, #a6ce39 0%, #68246D 50%, #a6ce39 100%);
         background-size: 120px 100%;
@@ -212,7 +240,7 @@
         color: var(--input-color);
         border-radius: 20px;
         width: 100%;
-        max-width: 300px;
+        max-width: 622px;
         transition: all 0.3s ease;
         font-size: 1rem;
         font-style: italic;
@@ -240,14 +268,11 @@
         box-shadow: 0 4px 20px rgba(0,0,0,0.05);
     }
 
-    .simple-list {
-        max-height: 10vh;
-        min-height: 0vh;
-        overflow-y: auto;
+    .info-list {
         margin: 2rem 0;
         border: 2px solid var(--border-color);
-        padding: 1.5rem;
-        border-radius: 10.52px;
+        padding: 0.65rem;
+        border-radius: 1.7rem;
         background: var(--list-bg);
         box-shadow: 0 4px 20px rgba(0,0,0,0.05);
     }
@@ -403,9 +428,8 @@
     }
 
     .form-label {
-        margin-bottom: 0.25rem;
-        margin-left: 4.7rem;
-        display: block;
+        margin: auto;
+        margin-top: 0.7rem !important;
     }
 
     .alert {

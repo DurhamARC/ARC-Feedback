@@ -369,13 +369,6 @@ p {
     gap: 1rem;
 }
 
-.form-group2 {
-    line-height: 0.1;
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-}
-
 .orcid-field {
     margin-left: auto;
 }

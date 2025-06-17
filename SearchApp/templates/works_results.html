@@ -9,24 +9,24 @@
     
     <form action="/process/publications" method="post" class="selection-form">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-        <div class="selection-list">
-            <div class="form-group">
-                <div class="field">
-                  <label for="username" class="form-label"><em>Full Name</em></label>
-                  <input type="text" name="username" id="username"
-                         class="form-input" value="{{ username }}"
-                         readonly/>
-                </div>
-                <div class="field orcid-field">
-                  <label for="orcidID" class="form-label"><em>ORCiD ID</em></label>
-                  <input type="text" name="orcidID" id="orcidID"
-                         class="form-input" value="{{ orcidID }}"
-                         readonly/>
-                {% if not enable_orcid_login %}
-                <input type="hidden" name="orcidInput" value="{{ orcidInput }}"/>
-                {% endif %}  
-                </div>
+        <div class="info-list">
+            <div class="field">
+                <label for="username" class="form-label"><em>Full Name</em></label>
+                <input type="text" name="username" id="username"
+                        class="form-input" value="{{ username }}"
+                        readonly/>
             </div>
+            <div class="field orcid-field">
+                <span><label for="orcidID" class="form-label"><em>ORCiD ID</em></label></span>
+                <input type="text" name="orcidID" id="orcidID"
+                        class="form-input" value="{{ orcidID }}"
+                        readonly/>
+            {% if not enable_orcid_login %}
+            <input type="hidden" name="orcidInput" value="{{ orcidInput }}"/>
+            {% endif %}  
+            </div>
+        </div>
+        <div class="selection-list">
             <div class="div">
             </div>
             {% for title in unique_titles %}
@@ -158,7 +158,7 @@
         background: var(--container-bg);
         border-radius: 2rem;
         box-shadow: 0 10px 30px rgba(0,0,0,0.05);
-        zoom: 95%;
+        zoom: 90%;
     }
 
     .page-title {
@@ -188,7 +188,7 @@
     .page-subtitle::after {
         content: "";
         display: block;
-        width: 60px;
+        width: 80px;
         height: 3px;
         background: repeating-linear-gradient(90deg, #a6ce39 0%, #68246D 50%, #a6ce39 100%);
         background-size: 120px 100%;
@@ -210,7 +210,7 @@
         color: var(--input-color);
         border-radius: 20px;
         width: 100%;
-        max-width: 300px;
+        max-width: 622px;
         transition: all 0.3s ease;
         font-size: 1rem;
         font-style: italic;
@@ -238,14 +238,11 @@
         box-shadow: 0 4px 20px rgba(0,0,0,0.05);
     }
 
-    .simple-list {
-        max-height: 10vh;
-        min-height: 0vh;
-        overflow-y: auto;
+    .info-list {
         margin: 2rem 0;
         border: 2px solid var(--border-color);
-        padding: 1.5rem;
-        border-radius: 10.52px;
+        padding: 0.65rem;
+        border-radius: 1.7rem;
         background: var(--list-bg);
         box-shadow: 0 4px 20px rgba(0,0,0,0.05);
     }
@@ -401,9 +398,8 @@
     }
 
     .form-label {
-        margin-bottom: 0.25rem;
-        margin-left: 4.7rem;
-        display: block;
+        margin:auto;
+        margin-top: 0.7rem !important;
     }
 
     .alert {
