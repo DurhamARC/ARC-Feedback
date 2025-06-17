@@ -166,10 +166,9 @@ class OrcidApp(BaseFlaskApp):
     def orcid_works_search(self):
         return render_template("orcid_id_works.html", enable_orcid_login=os.getenv('ENABLE_ORCID_LOGIN', 'true').lower() in ('true'), debug_mode=current_app.debug)
 
-    # About page !
     @handle_errors
     def about(self):
-        return render_template("orcid_id_works.html", enable_orcid_login=os.getenv('ENABLE_ORCID_LOGIN', 'true').lower() in ('true'), debug_mode=current_app.debug)
+        return render_template("about.html")
 
     @handle_errors
     def thankyou(self):
