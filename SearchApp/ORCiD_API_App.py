@@ -143,8 +143,12 @@ class OrcidApp(BaseFlaskApp):
         self.app.route("/publications/sso")(self.orcid_works_search)
         self.app.route("/about")(self.about)
         self.app.route("/thankyou")(self.thankyou)
-        self.app.route('/publications', methods=['GET', 'POST'])(self.get_orcid_works_data)
-        self.app.route('/fundings', methods=['GET', 'POST'])(self.get_orcid_fundings_data)
+        self.app.route('/publications', methods=['GET', 'POST'])(
+            self._limiter.limit("10 per minute")(self.get_orcid_works_data)
+        )
+        self.app.route('/fundings', methods=['GET', 'POST'])(
+            self._limiter.limit("10 per minute")(self.get_orcid_fundings_data)
+        )
         self.app.route('/api/token', methods=['GET', 'POST'])(self.get_access_token)
         self.app.route('/process/publications', methods=['POST'])(self.process_works_form)
         self.app.route('/process/fundings', methods=['POST'])(self.process_fundings_form)
@@ -213,8 +217,6 @@ class OrcidApp(BaseFlaskApp):
     #Utilities end
     @handle_errors
     def get_orcid_works_data(self):
-        self._limiter.limit("10 per minute")(lambda: None)
-
         orcid_id = None
         source = None
 
@@ -232,6 +234,9 @@ class OrcidApp(BaseFlaskApp):
             if not self.validate_orcid_id(orcid_id):
                 flash("Invalid ORCiD format submitted. Use XXXX-XXXX-XXXX-XXXX.", "error")
                 return redirect(url_for('orcid_works_search'))
+
+            session['orcid_id'] = orcid_id
+            session.permanent = True
         else:
             abort(405)
 
@@ -244,11 +249,12 @@ class OrcidApp(BaseFlaskApp):
         cached_data = self._cache.get(cache_key)
         if cached_data:
             username = cached_data.get('name', '')
+            session_orcid = session.get('orcid_id', orcid_id)
             return render_template('works_results.html',
                                    unique_titles=cached_data.get('titles', []),
                                    username=username,
                                    orcidInput=orcid_id,
-                                   orcidID = session['orcid_id'])
+                                   orcidID=session_orcid)
         
         url = f'https://pub.orcid.org/v3.0/{orcid_id}/works'
         headers = {
@@ -303,10 +309,11 @@ class OrcidApp(BaseFlaskApp):
             cache_data = {'titles': unique_titles, 'name': name}
             self._cache.set(cache_key, cache_data, timeout=30)
 
+            session_orcid = session.get('orcid_id', orcid_id)
             return render_template('works_results.html',
                                    unique_titles=unique_titles,
                                    username=name,
-                                   orcidID = session['orcid_id'])
+                                   orcidID=session_orcid)
 
         except requests.exceptions.HTTPError as e:
             status_code = e.response.status_code
@@ -330,8 +337,6 @@ class OrcidApp(BaseFlaskApp):
 
     @handle_errors
     def get_orcid_fundings_data(self):
-        self._limiter.limit("10 per minute")(lambda: None)
-
         orcid_id = None
         source = None
 
@@ -355,12 +360,13 @@ class OrcidApp(BaseFlaskApp):
         cached_data_fundings = self._cache.get(fundings_cache_key)
 
         if cached_data_fundings:
+            session_orcid = session.get('orcid_id', orcid_id)
             return render_template(
                 'fundings_results.html',
                 unique_titles=cached_data_fundings.get('titles', []),
                 username=cached_data_works.get('name', '') if cached_data_works else '',
                 orcidInput=orcid_id,
-                orcidID = session['orcid_id']
+                orcidID=session_orcid
             )
 
         url = f'https://pub.orcid.org/v3.0/{orcid_id}/fundings'
@@ -413,12 +419,13 @@ class OrcidApp(BaseFlaskApp):
 
             self._cache.set(fundings_cache_key, {'titles': unique_titles, 'name': name}, timeout=30)
 
+            session_orcid = session.get('orcid_id', orcid_id)
             return render_template(
                 'fundings_results.html',
                 unique_titles=unique_titles,
                 username=name,
                 orcidInput=orcid_id,
-                orcidID = session['orcid_id']
+                orcidID=session_orcid
             )
 
         except requests.exceptions.HTTPError as e:
@@ -731,8 +738,6 @@ class OrcidApp(BaseFlaskApp):
             records = db.session.query(Record.id, Record.orcid, User.name, Record.title, Record.type, Record.created_at) \
                                 .join(User, User.orcid == Record.orcid)
             
-            #current_app.logger.info(records)
-
             records = records.order_by(Record.created_at.desc()) \
                             .paginate(page=page, per_page=per_page, error_out=False)
             
