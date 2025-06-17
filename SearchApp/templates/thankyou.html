@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}ARC Feedback{% endblock %}
+{% set page = 'thankyou' %}
+{% block content %}
+
+<div class="page-container">
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <div class="error-message" aria-live="polite">
+                {% for message in messages %}
+                    <p>{{ message }}</p>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <div class="card-content">
+        <div style="animation: fadeIn 0.5s ease-out 0.5s forwards; opacity: 0; margin-left: 2.3rem;">
+            <img src="../static/heart.png" alt="A Heart" class="me-2">
+        </div>
+        <div class="separator-line"></div>
+        <p class="text-center instruction-text" style="animation: fadeIn 0.5s ease-out 0.3s forwards; opacity: 0; padding: 0.5rem; font-size: 1.5rem; -webkit-text-fill-color: var(--primary-color); font-style: italic;">
+            Thanks for your feedback!
+        </p>
+    </div>
+</div>
+
+<style>
+    .card-content {
+        zoom: 80%;
+    }
+</style>
+
+<script>
+    document.getElementById('orcidInput')?.addEventListener('input', function(e) {
+        this.value = this.value.toUpperCase();
+    });
+</script>
+
+</script>
+{% endblock %}

@@ -142,6 +142,7 @@ class OrcidApp(BaseFlaskApp):
         self.app.route("/")(self.home)
         self.app.route("/publications/sso")(self.orcid_works_search)
         self.app.route("/about")(self.about)
+        self.app.route("/thankyou")(self.thankyou)
         self.app.route('/publications', methods=['GET', 'POST'])(self.get_orcid_works_data)
         self.app.route('/fundings', methods=['GET', 'POST'])(self.get_orcid_fundings_data)
         self.app.route('/api/token', methods=['GET', 'POST'])(self.get_access_token)
@@ -169,6 +170,11 @@ class OrcidApp(BaseFlaskApp):
     @handle_errors
     def about(self):
         return render_template("orcid_id_works.html", enable_orcid_login=os.getenv('ENABLE_ORCID_LOGIN', 'true').lower() in ('true'), debug_mode=current_app.debug)
+
+    @handle_errors
+    def thankyou(self):
+        return render_template("thankyou.html")
+
 
     def _fetch_orcid_token(self):
         @self._cache.memoize(timeout=3500)
@@ -555,7 +561,7 @@ class OrcidApp(BaseFlaskApp):
             flash('An error occurred while saving the funding records. Please try again.', 'error')
             return redirect(url_for('orcid_works_search'))
 
-        return redirect(url_for('home'))
+        return redirect(url_for('thankyou'))
 
     @handle_errors
     def initiate_orcid_auth(self):
