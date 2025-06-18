@@ -15,10 +15,10 @@ from io import BytesIO
 import pandas as pd
 import requests
 import logging
+import secrets
 import click
 import re
 import os
-import secrets
 
 load_dotenv()
 
@@ -532,7 +532,7 @@ class OrcidApp(BaseFlaskApp):
                 else:
                     flash('No new publications were saved.', 'error')
 
-        except Exception as e:
+        except Exception:
             db.session.rollback()
             logging.exception("Error saving publications:")
             flash('An error occurred while saving the publications. Please try again.', 'error')
@@ -589,7 +589,7 @@ class OrcidApp(BaseFlaskApp):
                 else:
                     logging.debug("No new fundings were selected or saved.")
 
-        except Exception as e:
+        except Exception:
             db.session.rollback()
             flash('An error occurred while saving the funding records. Please try again.', 'error')
             return redirect(url_for('orcid_works_search'))
@@ -653,7 +653,7 @@ class OrcidApp(BaseFlaskApp):
         try:
             response = requests.post(token_url, headers=headers, data=data, timeout=10)
             response.raise_for_status()
-        except requests.exceptions.RequestException as e:
+        except requests.exceptions.RequestException:
              flash("Could not communicate with ORCID to finalize login. Please try again.", "error")
              abort(500)
 
