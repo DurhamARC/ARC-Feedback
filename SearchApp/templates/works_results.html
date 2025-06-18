@@ -1,37 +1,46 @@
 {% extends "base.html" %}
-{% block title %}Results{% endblock %}
+{% block title %}Publications tab{% endblock %}
 {% block content %}
-
 <div class="container">
     <div class="header-section">
         <h2 class="page-title">Publications Selection</h2>
-        <p class="page-subtitle">Please select the ones you have worked on using our ARC infrastructure</p>
+        <p class="page-subtitle">Select work created with ARC's infrastructure</p>
     </div>
     
     <form action="/process/publications" method="post" class="selection-form">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-        <div class="form-group">
-            <label for="username" class="form-label"><em>Your Full Name:</em></label>
-            <input type="text" name="username" id="username"
-                   class="form-input" value="{{ username }}"
-                   readonly/>
-                    
+        <div class="info-list">
+            <div class="field">
+                <label for="username" class="form-label"><em>Full Name</em></label>
+                <input type="text" name="username" id="username"
+                        class="form-input" value="{{ username }}"
+                        readonly/>
+            </div>
+            <div class="field orcid-field">
+                <span><label for="orcidID" class="form-label"><em>ORCiD ID</em></label></span>
+                <input type="text" name="orcidID" id="orcidID"
+                        class="form-input" value="{{ orcidID }}"
+                        readonly/>
+            {% if not enable_orcid_login %}
             <input type="hidden" name="orcidInput" value="{{ orcidInput }}"/>
-        </div>
-        <div class="div">
+            {% endif %}  
+            </div>
         </div>
         <div class="selection-list">
+            <div class="div">
+            </div>
             {% for title in unique_titles %}
                 <div class="form-check">
                     <label class="checkbox-label">
                         <input type="checkbox" name="selected_titles" 
                                value="{{ title }}" class="checkbox-input">
                         <span class="checkbox-custom"></span>
-                        <span class="publication-title">{{ title }}</span>
+                        <span class="checkbox-title">{{ title }}</span>
                     </label>
                 </div>
             {% endfor %}
         </div>
+
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 <div class="alert-messages">
@@ -47,37 +56,125 @@
         <div class="form-actions">
             <button type="button" class="btn btn-select-all">Select/Deselect all</button>
             <button type="submit" class="btn btn-primary" onclick="this.classList.add('loading')">
-                <span class="btn-text">Submit Selections</span>
+                <span class="btn-text">Submit</span>
             </button>
         </div>
     </form>
 </div>
 
+<script>
+  const form = document.querySelector('form');
+  const selectAllBtn = document.querySelector('.btn-select-all');
+
+  selectAllBtn.addEventListener('click', () => {
+    const checkboxes = document.querySelectorAll('.checkbox-input');
+    const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+    const newState = !allChecked;
+    checkboxes.forEach(cb => cb.checked = newState);
+  });
+
+  form.addEventListener('submit', (e) => {
+    const nameInput = document.getElementById('username');
+    if (nameInput.value.trim().length > 201) {
+        e.preventDefault();  
+        showError('Please change your ORCiD name to a valid one (1-200 characters, letters and spaces only)');
+        return;
+    }
+
+    const checkboxes = Array.from(document.querySelectorAll('.checkbox-input'));
+    const anySelected = checkboxes.some(cb => cb.checked);
+
+    if (!anySelected) {
+      e.preventDefault();
+      showError('Please select at least one funding');
+      return;
+    }
+
+    this.classList.add('loading');
+  });
+
+  function showError(message) {
+    const existing = form.querySelector('.alert-messages');
+    if (existing) existing.remove();
+
+    const wrapper = document.createElement('div');
+    wrapper.classList.add('alert-messages');
+    wrapper.innerHTML = `<div class="alert alert-error">${message}</div>`;
+
+    const actions = form.querySelector('.form-actions');
+    form.insertBefore(wrapper, actions);
+  }
+</script>
 <style>
+    :root {
+        --primary-color: #68246D;
+        --container-bg: white;
+        --list-bg: white;
+        --form-check-bg: #f9f9f9;
+        --checkbox-custom-bg: white;
+        --text-color: #333;
+        --input-color: #333;
+        --input-background: #f9f9f9;
+        --text-light: #555;
+        --border-color: #e0e0e0;
+        --alert-error-bg: #ffe6e6;
+        --alert-error-text: #3d3d3d;
+        --alert-error-border: #cc0000;
+        --alert-success-bg: #e6ffe6;
+        --alert-success-text: #4c814c;
+        --alert-success-border: #68246D;
+        --checked-color: #68246D;
+        --form-check-hover-bg: #f0f0f0;
+        --hovering: #5f3863;
+    }
+
+    body.dark-mode {
+        --primary-color: #9d5ba2;
+        --container-bg: #2d2d2d;
+        --list-bg: #353535;
+        --form-check-bg: #404040;
+        --checkbox-custom-bg: #404040;
+        --text-color: #e8e8e8;
+        --input-background: #404040;
+        --input-color: #e8e8e8;
+        --text-light: #b8b8b8;
+        --border-color: #555555;
+        --alert-error-bg: #3d1f1f;
+        --alert-error-text: #ffb3b3;
+        --alert-error-border: #ff6b6b;
+        --alert-success-bg: #1f3d1f;
+        --alert-success-text: #b3ffb3;
+        --alert-success-border: #a6ce39;
+        --checked-color: #9d5ba2;
+        --form-check-hover-bg: #4a4a4a;
+        --hovering: #b46bb9;
+    }
+
     .container {
         max-width: 800px;
         margin: 2rem auto;
         padding: 2rem;
         animation: fadeIn 0.5s ease-out;
-        background: white;
-        border-radius: 20px;
+        background: var(--container-bg);
+        border-radius: 2rem;
         box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+        zoom: 85%;
     }
 
     .page-title {
-        color: #68246D;
+        color: var(--primary-color);
         margin-bottom: 1.5rem;
         padding: 10px;
         font-size: 2rem;
         text-align: center;
-        background: linear-gradient(135deg, #68246D 0%, #8a3a8f 100%);
+        background: linear-gradient(135deg, var(--primary-color) 0%, #8a3a8f 100%);
         -webkit-background-clip: text;
         background-clip: text;
         color: transparent;
     }
 
     .page-subtitle {
-        color: #555;
+        color: var(--text-light);
         font-size: 1.15rem;
         margin: 0.75rem auto 1.5rem;
         line-height: 1.6;
@@ -91,28 +188,39 @@
     .page-subtitle::after {
         content: "";
         display: block;
-        width: 60px;
+        width: 80px;
         height: 3px;
-        background: linear-gradient(90deg, #68246D, #a6ce39);
+        background: repeating-linear-gradient(90deg, #a6ce39 0%, #68246D 50%, #a6ce39 100%);
+        background-size: 120px 100%;
         margin: 1rem auto 0;
         border-radius: 3px;
         opacity: 0.7;
+        animation: slide 4s linear infinite;
+    }
+
+    @keyframes slide {
+        0% { background-position: 0 0; }
+        100% { background-position: -120px 0; }
     }
 
     .form-input {
-    padding: 0.75rem;
-    border: 2px solid #e0e0e0;
-    border-radius: 12px;
-    width: 100%;
-    max-width: 300px;
-    transition: all 0.3s ease;
-    font-size: 1rem;
-    user-select: none;
-    cursor: default;
+        padding: 0.20rem;
+        border: 2px solid var(--border-color);
+        background-color: var(--input-background);
+        color: var(--input-color);
+        border-radius: 20px;
+        width: 100%;
+        max-width: 622px;
+        transition: all 0.3s ease;
+        font-size: 1rem;
+        font-style: italic;
+        user-select: none;
+        cursor: default;
+        text-align: center;
     }   
 
     .form-input:focus {
-        border-color: #68246D;
+        border-color: var(--primary-color);
         outline: none;
         box-shadow: 0 0 8px rgba(104, 36, 109, 0.2);
         cursor: default;
@@ -120,23 +228,40 @@
 
     .selection-list {
         max-height: 60vh;
+        min-height: 30vh;
         overflow-y: auto;
         margin: 2rem 0;
-        border: 2px solid #f0f0f0;
+        border: 2px solid var(--border-color);
         padding: 1.5rem;
-        border-radius: 15px;
-        background: white;
+        border-radius: 1.7rem;
+        background: var(--list-bg);
+        box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+    }
+
+    .info-list {
+        margin: 2rem 0;
+        border: 2px solid var(--border-color);
+        padding: 0.65rem;
+        border-radius: 1.7rem;
+        background: var(--list-bg);
         box-shadow: 0 4px 20px rgba(0,0,0,0.05);
     }
     
     .form-check {
         margin: 0.75rem 0;
         padding: 1rem;
-        background: #f9f9f9;
-        border-radius: 12px;
+        background: var(--form-check-bg);
+        border-radius: 1.5rem;
         transition: all 0.3s ease;
         animation: fadeIn 0.5s ease-out;
         animation-fill-mode: both;
+    }
+
+    .checkbox-label {
+        display: flex;
+        align-items: center;
+        cursor: pointer;
+        position: relative;
     }
 
     @keyframes fadeIn {
@@ -145,8 +270,7 @@
     }
 
     .form-check:hover {
-        background: #f0f0f0;
-        transform: translateY(-2px);
+        background: var(--form-check-hover-bg);
     }
 
     .form-check:nth-child(1) { animation-delay: 0.1s; }
@@ -154,13 +278,6 @@
     .form-check:nth-child(3) { animation-delay: 0.3s; }
     .form-check:nth-child(4) { animation-delay: 0.4s; }
     .form-check:nth-child(5) { animation-delay: 0.5s; }
-
-    .checkbox-label {
-        display: flex;
-        align-items: center;
-        cursor: pointer;
-        position: relative;
-    }
 
     .checkbox-input {
         position: absolute;
@@ -174,16 +291,16 @@
         height: 22px;
         width: 22px;
         min-width: 22px;
-        background-color: white;
-        border: 2px solid #68246D;
-        border-radius: 5px;
+        background-color: var(--checkbox-custom-bg);
+        border: 2px solid var(--primary-color);
+        border-radius: 9999px;
         margin-right: 1rem;
         transition: all 0.3s ease;
         flex-shrink: 0;
     }
 
     .checkbox-input:checked ~ .checkbox-custom {
-        background-color: #68246D;
+        background-color: var(--checked-color);
     }
 
     .checkbox-custom::after {
@@ -203,15 +320,10 @@
         display: block;
     }
 
-    .publication-title {
+    .checkbox-title {
         font-size: 1.1rem;
-        color: #333;
+        color: var(--text-color);
         transition: all 0.3s ease;
-    }
-
-    .checkbox-input:checked ~ .publication-title {
-        color: #68246D;
-        font-weight: 500;
     }
 
     .form-actions {
@@ -222,11 +334,11 @@
     }
 
     .btn {
-        padding: 0.75rem 1.5rem;
+        padding: 1rem 2.5rem;
         border: none;
-        border-radius: 12px;
+        border-radius: 9999px;
         cursor: pointer;
-        font-size: 1rem;
+        font-size: 0.8rem;
         font-weight: 600;
         transition: all 0.3s ease;
         position: relative;
@@ -234,25 +346,29 @@
     }
 
     .btn-primary {
-        background: linear-gradient(135deg, #68246D 0%, #8a3a8f 100%);
+        background: linear-gradient(135deg, var(--primary-color) 0%, #8a3a8f 100%);
         color: white;
         box-shadow: 0 4px 15px rgba(104, 36, 109, 0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
 
     .btn-primary:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 6px 20px rgba(104, 36, 109, 0.3);
+        background: linear-gradient(135deg, var(--hovering) 0%, #792b7c 100%);
     }
 
     .btn-select-all {
-        background: linear-gradient(135deg, #6da0ff 0%, #a6beff 100%);
+        background: linear-gradient(135deg, #4c814c 0%, #4c814c 100%);
         color: white !important;
-        box-shadow: 0 4px 15px rgba(109, 160, 255, 0.2);
+        box-shadow: 0 4px 15px #4c814c76;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
 
     .btn-select-all:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 6px 20px rgba(109, 160, 255, 0.3);
+        background: linear-gradient(135deg, #4c634c 0%, #3b663b 100%);
         color: white !important;
     }
 
@@ -282,8 +398,9 @@
     }
 
     .form-label {
-        margin-bottom: 0.25rem;
-        display: block;
+        margin:auto;
+        margin-top: 0.65rem;
+        color: var(--text-color);
     }
 
     .alert {
@@ -299,31 +416,15 @@
     }
 
     .alert-error {
-        background: #ffe6e6;
-        color: #cc0000;
-        border-left: 5px solid #cc0000;
+        background: var(--alert-error-bg);
+        color: var(--alert-error-text);
+        border-left: 5px solid var(--alert-error-border);
     }
 
     .alert-success {
-        background: #e6ffe6;
-        color: #4c814c;
-        border-left: 5px solid #68246D;
+        background: var(--alert-success-bg);
+        color: var(--alert-success-text);
+        border-left: 5px solid var(--alert-success-border);
     }
 </style>
-
-<script>
-    document.querySelector('.btn-select-all').addEventListener('click', () => {
-        const checkboxes = document.querySelectorAll('.checkbox-input');
-        const currentState = checkboxes[0]?.checked || false;
-        checkboxes.forEach(checkbox => checkbox.checked = !currentState);
-    });
-
-    document.querySelector('form').addEventListener('submit', (e) => {
-        const nameInput = document.getElementById('username');
-        if (!/^[A-Za-z ]{2,50}$/.test(nameInput.value.trim())) {
-            e.preventDefault();
-            alert('Please enter a valid name (2-50 characters, letters and spaces only)');
-        }
-    });
-</script>
 {% endblock %}
