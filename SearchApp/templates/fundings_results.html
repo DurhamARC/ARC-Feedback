@@ -76,9 +76,9 @@
 
   form.addEventListener('submit', (e) => {
     const nameInput = document.getElementById('username');
-    if (!/^(N\/A|[A-Za-z ]{1,63})$/i.test(nameInput.value.trim())) {
+    if (nameInput.value.trim().length > 201) {
         e.preventDefault();  
-        showError('Please change your ORCiD name to a valid one (1-63 characters, letters and spaces only)');
+        showError('Please change your ORCiD name to a valid one (1-200 characters, letters and spaces only)');
         return;
     }
 

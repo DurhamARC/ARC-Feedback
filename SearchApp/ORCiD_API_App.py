@@ -498,7 +498,7 @@ class OrcidApp(BaseFlaskApp):
         else:
             orcid_input = request.form.get("orcidID", "").strip()
 
-        if username and not re.match(r"^(n/a|[a-zA-Zà-ÿ.' \-]{1,100})$", username, re.IGNORECASE):
+        if username and len(username) > 201:
             flash('Invalid characters in name or name too long/short.', 'error')
             return redirect(url_for('orcid_works_search'))
 
