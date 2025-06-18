@@ -26,6 +26,7 @@ class Record(db.Model):
     title = db.Column(db.String(500), nullable=False, index=True)
     type = db.Column(db.Enum('publication', 'funding', name='record_type'), nullable=False, index=True)
     created_at = db.Column(db.DateTime, default=uk_time, nullable=False, index=True)
+    submission_id = db.Column(db.String(32), nullable=False, index=True)
     __table_args__ = (
         db.Index('idx_record_orcid_type', 'orcid', 'type'),
     )

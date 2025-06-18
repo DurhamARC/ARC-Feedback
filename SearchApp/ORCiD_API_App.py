@@ -161,6 +161,7 @@ class OrcidApp(BaseFlaskApp):
         self.app.route('/admin/download/time_range', methods=['GET', 'POST'])(self.download_time_range)
         self.app.route('/admin/clear_database', methods=['GET', 'POST'])(self.clear_database)
         self.app.route('/admin/data')(self.admin_data)
+        self.app.route('/reset/publications')(self.reset_publications)
 
     @handle_errors
     def home(self):
@@ -197,7 +198,24 @@ class OrcidApp(BaseFlaskApp):
             except requests.exceptions.RequestException as e:
                 return flash(f"Error: Request exception inside of fetch_orcid_token: {e}", "error")
         return _inner_fetch()
+    
     #Utilities start
+
+    @handle_errors
+    def reset_publications(self):
+        if 'orcid_id' not in session or 'current_submission_id' not in session:
+            flash("Session expired. Please start over.", "error")
+            return redirect(url_for('orcid_works_search'))
+        orcid_id = session['orcid_id']
+        submission_id = session['current_submission_id']
+        try:
+            Record.query.filter_by(orcid=orcid_id, type='publication', submission_id=submission_id).delete()
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            flash("An error occurred while removing previous selections.", "error")
+        return redirect(url_for('get_orcid_works_data'))
+
     @handle_errors
     def get_access_token(self):
         token = self._fetch_orcid_token()
@@ -215,6 +233,7 @@ class OrcidApp(BaseFlaskApp):
         return f"orcid_works_{orcid_id}"
 
     #Utilities end
+    
     @handle_errors
     def get_orcid_works_data(self):
         orcid_id = None
@@ -493,20 +512,23 @@ class OrcidApp(BaseFlaskApp):
                 elif username and user.name != username:
                     user.name = username
 
+                submission_id = secrets.token_urlsafe(16)
+                session['current_submission_id'] = submission_id
+
                 saved_count = 0
                 for title in selected_titles:
                     record = Record(
                         title=title,
                         type='publication',
                         orcid=orcid_input,
-                        users=user
+                        users=user,
+                        submission_id=submission_id
                     )
                     db.session.add(record)
                     saved_count += 1
 
                 if saved_count:
                     db.session.commit()
-                    flash(f'{saved_count} publication(s) saved successfully!', 'success')
                 else:
                     flash('No new publications were saved.', 'error')
 
@@ -547,9 +569,17 @@ class OrcidApp(BaseFlaskApp):
                 elif username and user.name != username:
                     user.name = username
 
+                submission_id = session.get('current_submission_id')
+
                 saved_count = 0
                 for title in selected_titles:
-                    record = Record(title=title, type='funding', orcid=orcid_input, users=user)
+                    record = Record(
+                        title=title,
+                        type='funding',
+                        orcid=orcid_input,
+                        users=user,
+                        submission_id=submission_id
+                    )
                     db.session.add(record)
                     saved_count += 1
 
