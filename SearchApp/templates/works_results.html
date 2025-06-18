@@ -75,10 +75,10 @@
 
   form.addEventListener('submit', (e) => {
     const nameInput = document.getElementById('username');
-    if (!/^(N\/A|[A-Za-z ]{2,63})$/i.test(nameInput.value.trim())) {
-      e.preventDefault();
-      showError('Please enter a valid name (2-63 characters, letters and spaces only)');
-      return;
+    if (!/^(N\/A|[A-Za-z ]{1,63})$/i.test(nameInput.value.trim())) {
+        e.preventDefault();  
+        showError('Please change your ORCiD name to a valid one (1-63 characters, letters and spaces only)');
+        return;
     }
 
     const checkboxes = Array.from(document.querySelectorAll('.checkbox-input'));
