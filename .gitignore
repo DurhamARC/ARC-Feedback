@@ -5,3 +5,4 @@ __pycache__/
 SearchApp/*.xlsx
 SearchApp/*.xml
 .r*
+.vscode/
