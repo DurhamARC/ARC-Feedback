@@ -56,56 +56,67 @@
 
         <div class="form-actions">
             <button type="button" class="btn btn-select-all">Select/Deselect all</button>
-            <button type="submit" class="btn btn-primary" onclick="this.classList.add('loading')">
+            <button type="submit" name="action" value="submit" class="btn btn-primary" onclick="this.classList.add('loading')">
                 <span class="btn-text">Submit</span>
+            </button>
+            <button type="submit" name="action" value="skip" class="btn btn-skip">
+                <span class="btm-text">Skip</span>
             </button>
         </div>
     </form>
 </div>
 
 <script>
-  const form = document.querySelector('form');
-  const selectAllBtn = document.querySelector('.btn-select-all');
+    const form = document.querySelector('form');
+    const selectAllBtn = document.querySelector('.btn-select-all');
 
-  selectAllBtn.addEventListener('click', () => {
-    const checkboxes = document.querySelectorAll('.checkbox-input');
-    const allChecked = Array.from(checkboxes).every(cb => cb.checked);
-    const newState = !allChecked;
-    checkboxes.forEach(cb => cb.checked = newState);
-  });
+    selectAllBtn.addEventListener('click', () => {
+        const checkboxes = document.querySelectorAll('.checkbox-input');
+        const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+        const newState = !allChecked;
+        checkboxes.forEach(cb => cb.checked = newState);
+    });
 
-  form.addEventListener('submit', (e) => {
-    const nameInput = document.getElementById('username');
-    if (nameInput.value.trim().length > 201) {
-        e.preventDefault();  
-        showError('Please change your ORCiD name to a valid one (1-200 characters, letters and spaces only)');
-        return;
+    form.addEventListener('submit', (e) => {
+        const submitter = e.submitter;
+        const isSkip = submitter && submitter.name === 'action' && submitter.value === 'skip';
+        
+        if (!isSkip) {
+            const nameInput = document.getElementById('username');
+            if (nameInput.value.trim().length > 201) {
+                e.preventDefault();
+                showError('Please change your ORCiD name to a valid one (1-200 characters)');
+                return;
+            }
+
+            const checkboxes = Array.from(document.querySelectorAll('.checkbox-input'));
+            const anySelected = checkboxes.some(cb => cb.checked);
+
+            if (!anySelected) {
+                e.preventDefault();
+                showError('Please select at least one funding');
+                return;
+            }
+        }
+        
+        if (submitter) {
+            submitter.classList.add('loading');
+        }
+    });
+
+    function showError(message) {
+        const existing = form.querySelector('.alert-messages');
+        if (existing) existing.remove();
+
+        const wrapper = document.createElement('div');
+        wrapper.classList.add('alert-messages');
+        wrapper.innerHTML = `<div class="alert alert-error">${message}</div>`;
+
+        const actions = form.querySelector('.form-actions');
+        form.insertBefore(wrapper, actions);
     }
-
-    const checkboxes = Array.from(document.querySelectorAll('.checkbox-input'));
-    const anySelected = checkboxes.some(cb => cb.checked);
-
-    if (!anySelected) {
-      e.preventDefault();
-      showError('Please select at least one funding');
-      return;
-    }
-
-    this.classList.add('loading');
-  });
-
-  function showError(message) {
-    const existing = form.querySelector('.alert-messages');
-    if (existing) existing.remove();
-
-    const wrapper = document.createElement('div');
-    wrapper.classList.add('alert-messages');
-    wrapper.innerHTML = `<div class="alert alert-error">${message}</div>`;
-
-    const actions = form.querySelector('.form-actions');
-    form.insertBefore(wrapper, actions);
-  }
 </script>
+
 <style>
     :root {
         --primary-color: #68246D;
@@ -400,6 +411,20 @@
     .btn-select-all:hover {
         background: linear-gradient(135deg, #4c634c 0%, #3b663b 100%);
         color: white !important;
+    }
+
+    .btn-skip {
+        background: linear-gradient(135deg, teal 0%, rgba(0, 128, 128, 0.500) 100%);
+        color: white !important;
+        box-shadow: 0 4px 15px rgba(0, 128, 128, 0.206);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .btn-skip:hover {
+       background: linear-gradient(135deg, rgb(0, 80, 80) 0%, rgba(0, 128, 128, 0.500) 100%);
+       color: white !important;
     }
 
     .btn.loading .btn-text {

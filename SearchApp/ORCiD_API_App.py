@@ -486,6 +486,7 @@ class OrcidApp(BaseFlaskApp):
     def process_works_form(self):
         selected_titles = request.form.getlist('selected_titles')
         username = request.form.get('username', '').strip()
+        action = request.form.get('action')
 
         if not selected_titles:
             pass
@@ -516,21 +517,24 @@ class OrcidApp(BaseFlaskApp):
                 session['current_submission_id'] = submission_id
 
                 saved_count = 0
-                for title in selected_titles:
-                    record = Record(
-                        title=title,
-                        type='publication',
-                        orcid=orcid_input,
-                        users=user,
-                        submission_id=submission_id
-                    )
-                    db.session.add(record)
-                    saved_count += 1
+                if not action == "skip":
+                    for title in selected_titles:
+                        record = Record(
+                            title=title,
+                            type='publication',
+                            orcid=orcid_input,
+                            users=user,
+                            submission_id=submission_id
+                        )
+                        db.session.add(record)
+                        saved_count += 1
 
-                if saved_count:
-                    db.session.commit()
+                    if saved_count:
+                        db.session.commit()
+                    else:
+                        logging.debug("No new fundings were selected or saved.")
                 else:
-                    flash('No new publications were saved.', 'error')
+                    pass
 
         except Exception:
             db.session.rollback()
@@ -543,6 +547,7 @@ class OrcidApp(BaseFlaskApp):
     def process_fundings_form(self):
         selected_titles = request.form.getlist('selected_titles')
         username = request.form.get('username', '').strip()
+        action = request.form.get('action')
 
         if not selected_titles:
             pass
@@ -572,22 +577,25 @@ class OrcidApp(BaseFlaskApp):
                 submission_id = session.get('current_submission_id')
 
                 saved_count = 0
-                for title in selected_titles:
-                    record = Record(
-                        title=title,
-                        type='funding',
-                        orcid=orcid_input,
-                        users=user,
-                        submission_id=submission_id
-                    )
-                    db.session.add(record)
-                    saved_count += 1
+                if not action == "skip":
+                    for title in selected_titles:
+                        record = Record(
+                            title=title,
+                            type='funding',
+                            orcid=orcid_input,
+                            users=user,
+                            submission_id=submission_id
+                        )
+                        db.session.add(record)
+                        saved_count += 1
 
-                if saved_count > 0:
-                    db.session.commit()
-                    logging.debug(f'{saved_count} funding record(s) saved successfully!', 'success')
+                    if saved_count > 0:
+                        db.session.commit()
+                        logging.debug(f'{saved_count} funding record(s) saved successfully!', 'success')
+                    else:
+                        logging.debug("No new fundings were selected or saved.")
                 else:
-                    logging.debug("No new fundings were selected or saved.")
+                    pass
 
         except Exception:
             db.session.rollback()
