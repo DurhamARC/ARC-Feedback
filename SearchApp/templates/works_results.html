@@ -26,6 +26,7 @@
             {% endif %}  
             </div>
         </div>
+        {% if unique_titles %}
         <div class="selection-list">
             <div class="div">
             </div>
@@ -40,6 +41,7 @@
                 </div>
             {% endfor %}
         </div>
+        {% endif %}
 
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}

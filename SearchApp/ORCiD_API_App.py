@@ -149,6 +149,7 @@ class OrcidApp(BaseFlaskApp):
         self.app.route('/fundings', methods=['GET', 'POST'])(
             self._limiter.limit("10 per minute")(self.get_orcid_fundings_data)
         )
+        self.app.route('/publications/result', methods=['GET', 'POST'])(self.no_publications)
         self.app.route('/api/token', methods=['GET', 'POST'])(self.get_access_token)
         self.app.route('/process/publications', methods=['POST'])(self.process_works_form)
         self.app.route('/process/fundings', methods=['POST'])(self.process_fundings_form)
@@ -235,6 +236,88 @@ class OrcidApp(BaseFlaskApp):
     #Utilities end
     
     @handle_errors
+    def no_publications(self):
+        session_orcid = session.get('orcid_id')
+        full_name = session.get("full_name")
+        return render_template('works_results.html', orcidID=session_orcid, username=full_name)
+
+    def _get_name_from_orcid(self, orcid_id, access_token):
+        # https://info.orcid.org/documentation/api-tutorials/api-tutorial-read-data-on-a-record/
+        url = f'https://pub.orcid.org/v3.0/{orcid_id}/person'
+        headers = {
+            'Accept': 'application/vnd.orcid+xml',
+            'Authorization': f'Bearer {access_token}'
+        }
+        response = requests.get(url, headers=headers, timeout=15)
+        response.raise_for_status()
+
+        root = ET.fromstring(response.content)
+        
+        # Define namespaces used in OrcID XML
+        namespaces = {
+            'person': 'http://www.orcid.org/ns/person',
+            'personal-details': 'http://www.orcid.org/ns/personal-details',
+        }
+        
+        # Find the name element
+        name_element = root.find('.//person:name', namespaces)
+        
+        if name_element is not None:
+            # Extract given names and family name
+            given_names_elem = name_element.find('personal-details:given-names', namespaces)
+            family_name_elem = name_element.find('personal-details:family-name', namespaces)
+            
+            given_names = given_names_elem.text if given_names_elem is not None else ""
+            family_name = family_name_elem.text if family_name_elem is not None else ""
+            
+            # Combine the names
+            full_name = f"{given_names} {family_name}".strip()
+            return full_name
+        return None
+    
+    def _get_works_from_orcid(self, orcid_id, access_token):
+        url = f'https://pub.orcid.org/v3.0/{orcid_id}/works'
+        headers = {
+            'Accept': 'application/vnd.orcid+xml',
+            'Authorization': f'Bearer {access_token}'
+        }
+        response = requests.get(url, headers=headers, timeout=15)
+        response.raise_for_status()
+
+        namespaces = {
+            'common': 'http://www.orcid.org/ns/common',
+            'work': 'http://www.orcid.org/ns/work',
+        }
+
+        root = ET.fromstring(response.text)
+
+        titles = [title.text for title in root.findall('.//work:title/common:title', namespaces) if title.text]
+        normalised_titles = {normalise_title(title): title for title in titles if title}
+        return list(normalised_titles.values())
+    
+    def _get_fundings_from_orcid(self, orcid_id, access_token):
+        url = f'https://pub.orcid.org/v3.0/{orcid_id}/fundings'
+        headers = {
+            'Accept': 'application/vnd.orcid+xml',
+            'Authorization': f'Bearer {access_token}'
+        }
+
+        response = requests.get(url, headers=headers, timeout=15)
+        response.raise_for_status()
+
+        namespaces = {
+            'common': 'http://www.orcid.org/ns/common',
+            'funding': 'http://www.orcid.org/ns/funding'
+        }
+        
+        root = ET.fromstring(response.text)
+
+        return [
+            t.text for t in root.findall('.//funding:title/common:title', namespaces)
+            if t.text
+        ]
+    
+    @handle_errors
     def get_orcid_works_data(self):
         orcid_id = None
         source = None
@@ -245,7 +328,7 @@ class OrcidApp(BaseFlaskApp):
                 source = 'session'
             else:
                 flash("Please log in with ORCID on the first page.", "info")
-                return redirect(url_for('orcid_works_search'))
+                return redirect(url_for('no_publications'))
 
         elif request.method == 'POST':
             orcid_id = request.form.get('orcidInput')
@@ -275,56 +358,14 @@ class OrcidApp(BaseFlaskApp):
                                    orcidInput=orcid_id,
                                    orcidID=session_orcid)
         
-        url = f'https://pub.orcid.org/v3.0/{orcid_id}/works'
-        headers = {
-            'Accept': 'application/vnd.orcid+xml',
-            'Authorization': f'Bearer {access_token}'
-        }
-
         try:
-            response = requests.get(url, headers=headers, timeout=15)
-            response.raise_for_status()
+            session["full_name"] = name = self._get_name_from_orcid(orcid_id, access_token)
+            unique_titles = self._get_works_from_orcid(orcid_id, access_token)
 
-            namespaces = {
-                'common': 'http://www.orcid.org/ns/common',
-                'work': 'http://www.orcid.org/ns/work',
-            }
-
-            root = ET.fromstring(response.text)
-
-            titles = [title.text for title in root.findall('.//work:title/common:title', namespaces) if title.text]
-            if not titles:
-                flash(f"No publications found for ORCID {orcid_id}.", "info")
-
-            # Name Retriever Start
-            name = ''
-            all_assertion_origin_names = [name.text for name in root.findall('.//common:assertion-origin-name', namespaces) if name.text]
-            all_source_names = [name.text for name in root.findall('.//common:source-name', namespaces) if name.text]
-
-            if all_assertion_origin_names:
-                name_list_to_use = all_assertion_origin_names
-            elif all_source_names:
-                name_list_to_use = all_source_names
-
-
-            if name_list_to_use:
-                from collections import Counter
-                name_counts = Counter(name_list_to_use)
-                threshold_len = len(all_source_names) if all_source_names else 0
-                threshold = threshold_len * 0.75
-                common_names = [n for n, count in name_counts.items() if count >= threshold]
-
-                if common_names:
-                    name = common_names[0]
-                elif all_source_names:
-                    name = all_source_names[0]
-            else:
-                name = "N/A"
-            # Name Retriever End
-
-            normalised_titles = {normalise_title(title): title for title in titles if title}
-            unique_titles = list(normalised_titles.values())
-
+            if len(unique_titles) == 0:
+                flash(f"No publication has been found in your ORCiD record.", "info")
+                return redirect(url_for('no_publications'))
+            
             cache_data = {'titles': unique_titles, 'name': name}
             self._cache.set(cache_key, cache_data, timeout=30)
 
@@ -364,7 +405,7 @@ class OrcidApp(BaseFlaskApp):
                 orcid_id = session['orcid_id']
                 source = 'session'
             else:
-                flash("Please log in with ORCID or enter your ORCID ID on the search page.", "info")
+                flash("Please log in with ORCID or enter your ORCID ID on the search page.", "error")
                 return redirect(url_for('orcid_works_search'))
 
         access_token = self._fetch_orcid_token()
@@ -388,50 +429,12 @@ class OrcidApp(BaseFlaskApp):
                 orcidID=session_orcid
             )
 
-        url = f'https://pub.orcid.org/v3.0/{orcid_id}/fundings'
-        headers = {
-            'Accept': 'application/vnd.orcid+xml',
-            'Authorization': f'Bearer {access_token}'
-        }
-
-        unique_titles = []
-        name = ''
-
         try:
-            response = requests.get(url, headers=headers, timeout=15)
-            response.raise_for_status()
+            name = session["full_name"]
+            titles = self._get_fundings_from_orcid(orcid_id, access_token)
 
-            # XML namespaces
-            namespaces = {
-                'common': 'http://www.orcid.org/ns/common',
-                'funding': 'http://www.orcid.org/ns/funding'
-            }
-            root = ET.fromstring(response.text)
-
-            all_assertion_origin_names = [
-                n.text for n in root.findall('.//common:assertion-origin-name', namespaces)
-                if n.text
-            ]
-            all_source_names = [
-                n.text for n in root.findall('.//common:source-name', namespaces)
-                if n.text
-            ]
-            name_list = all_assertion_origin_names or all_source_names
-            if name_list:
-                from collections import Counter
-                counts = Counter(name_list)
-                threshold = (len(all_source_names) * 0.75) if all_source_names else 0
-                common = [n for n, c in counts.items() if c >= threshold]
-                name = common[0] if common else (all_source_names[0] if all_source_names else '')
-            elif cached_data_works:
-                name = cached_data_works.get('name', '')
-                
-            titles = [
-                t.text for t in root.findall('.//funding:title/common:title', namespaces)
-                if t.text
-            ]
             if not titles:
-                flash(f"No funding found for ORCID {orcid_id}. (press submit)", "info")
+                flash(f"No funding has been found in your ORCiD record. (Press skip)", "info")
             else:
                 normalized = {normalise_title(t): t for t in titles}
                 unique_titles = list(normalized.values())
