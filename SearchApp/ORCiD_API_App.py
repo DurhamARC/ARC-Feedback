@@ -149,7 +149,8 @@ class OrcidApp(BaseFlaskApp):
         self.app.route('/fundings', methods=['GET', 'POST'])(
             self._limiter.limit("10 per minute")(self.get_orcid_fundings_data)
         )
-        self.app.route('/publications/result', methods=['GET', 'POST'])(self.no_publications)
+        self.app.route('/publications/empty', methods=['GET', 'POST'])(self.no_publications)
+        self.app.route('/fundings/empty', methods=['GET', 'POST'])(self.no_fundings)
         self.app.route('/api/token', methods=['GET', 'POST'])(self.get_access_token)
         self.app.route('/process/publications', methods=['POST'])(self.process_works_form)
         self.app.route('/process/fundings', methods=['POST'])(self.process_fundings_form)
@@ -235,6 +236,12 @@ class OrcidApp(BaseFlaskApp):
 
     #Utilities end
     
+    @handle_errors
+    def no_fundings(self):
+        session_orcid = session.get('orcid_id')
+        full_name = session.get("full_name")
+        return render_template('fundings_results.html', orcidID=session_orcid, username=full_name)
+
     @handle_errors
     def no_publications(self):
         session_orcid = session.get('orcid_id')
@@ -363,7 +370,7 @@ class OrcidApp(BaseFlaskApp):
             unique_titles = self._get_works_from_orcid(orcid_id, access_token)
 
             if len(unique_titles) == 0:
-                flash(f"No publication has been found in your ORCiD record.", "info")
+                current_app.logger.error(f"No publication has been found in your ORCiD record.", "info")
                 return redirect(url_for('no_publications'))
             
             cache_data = {'titles': unique_titles, 'name': name}
@@ -434,7 +441,7 @@ class OrcidApp(BaseFlaskApp):
             titles = self._get_fundings_from_orcid(orcid_id, access_token)
 
             if not titles:
-                flash(f"No funding has been found in your ORCiD record. (Press skip)", "info")
+                return redirect(url_for('no_fundings'))
             else:
                 normalized = {normalise_title(t): t for t in titles}
                 unique_titles = list(normalized.values())

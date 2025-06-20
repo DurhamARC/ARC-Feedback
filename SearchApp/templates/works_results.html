@@ -4,7 +4,11 @@
 <div class="container">
     <div class="header-section">
         <h2 class="page-title">Publications Selection</h2>
+        {% if unique_titles %}
         <p class="page-subtitle">Select work created with ARC's infrastructure</p>
+        {% else %}
+        <p class="page-subtitle">No publication has been found in your ORCiD record.</p>        
+        {% endif %}
     </div>
     
     <form action="/process/publications" method="post" class="selection-form">
@@ -56,10 +60,12 @@
         {% endwith %}   
 
         <div class="form-actions">
-            <button type="button" class="btn btn-select-all">Select/Deselect all</button>
-            <button type="submit" name="action" value="submit" class="btn btn-primary">
-                <span class="btn-text">Submit</span>
-            </button>
+            {% if unique_titles %}
+                <button type="button" class="btn btn-select-all">Select/Deselect all</button>
+                <button type="submit" name="action" value="submit" class="btn btn-primary">
+                    <span class="btn-text">Submit</span>
+                </button>
+            {% endif %}
             <button type="submit" name="action" value="skip" class="btn btn-skip">
                 <span class="btn-text">Skip</span>
             </button>            
@@ -70,6 +76,7 @@
 <script>
     const form = document.querySelector('form');
     const selectAllBtn = document.querySelector('.btn-select-all');
+    const formTitles = document.querySelector('.form-check');
 
     selectAllBtn.addEventListener('click', () => {
         const checkboxes = document.querySelectorAll('.checkbox-input');
@@ -93,7 +100,7 @@
             const checkboxes = Array.from(document.querySelectorAll('.checkbox-input'));
             const anySelected = checkboxes.some(cb => cb.checked);
 
-            if (!anySelected) {
+            if (!anySelected && formTitles) {
                 e.preventDefault();
                 showError('Please select at least one publication');
                 return;

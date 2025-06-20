@@ -7,7 +7,11 @@
     </a>
     <div class="header-section">
         <h2 class="page-title">Fundings Selection</h2>
+        {% if unique_titles %}
         <p class="page-subtitle">Select fundings generated with ARC's infrastructure</p>
+        {% else %}
+        <p class="page-subtitle">No funding has been found in your ORCiD record.</p>        
+        {% endif %}
     </div>
     
     <form action="/process/fundings" method="post" class="selection-form">
@@ -29,6 +33,7 @@
                 {% endif %}  
             </div>
         </div>
+        {% if unique_titles %}
         <div class="selection-list">
             {% for title in unique_titles %}
                 <div class="form-check">
@@ -41,6 +46,7 @@
                 </div>
             {% endfor %}
         </div>
+        {% endif %}
 
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
@@ -55,10 +61,12 @@
         {% endwith %}   
 
         <div class="form-actions">
+            {% if unique_titles %}
             <button type="button" class="btn btn-select-all">Select/Deselect all</button>
             <button type="submit" name="action" value="submit" class="btn btn-primary" onclick="this.classList.add('loading')">
                 <span class="btn-text">Submit</span>
             </button>
+            {% endif %}
             <button type="submit" name="action" value="skip" class="btn btn-skip">
                 <span class="btm-text">Skip</span>
             </button>
@@ -69,6 +77,7 @@
 <script>
     const form = document.querySelector('form');
     const selectAllBtn = document.querySelector('.btn-select-all');
+    const formTitles = document.querySelector('.form-check');
 
     selectAllBtn.addEventListener('click', () => {
         const checkboxes = document.querySelectorAll('.checkbox-input');
@@ -92,7 +101,7 @@
             const checkboxes = Array.from(document.querySelectorAll('.checkbox-input'));
             const anySelected = checkboxes.some(cb => cb.checked);
 
-            if (!anySelected) {
+            if (!anySelected && formTitles) {
                 e.preventDefault();
                 showError('Please select at least one funding');
                 return;
