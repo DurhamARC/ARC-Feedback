@@ -18,6 +18,7 @@
     --selection-bg: #68246D;
     --selection-text: #f8f8f8;
     --button-text: white;
+    --hovering: #5f3863;
 }
 
 body.dark-mode {
@@ -38,6 +39,7 @@ body.dark-mode {
     --gradient-secondary: linear-gradient(135deg, #a6ce39 0%, #8bb82e 100%);
     --error-bg: #3d1f1f;
     --error-text: #ffb3b3;
+    --hovering: #b46bb9;
 }
 
 ::-moz-selection {
@@ -362,6 +364,30 @@ p {
 .button-secondary:hover {
     box-shadow: 0 8px 25px rgba(166, 206, 57, 0.3);
 }
+
+.form-input {
+    padding: 0.20rem;
+    border: 2px solid var(--border-color);
+    background-color: var(--input-background);
+    color: var(--input-color);
+    border-radius: 20px;
+    width: 100%;
+    max-width: 622px;
+    transition: all 0.3s ease;
+    font-size: 1rem;
+    font-style: italic;
+    user-select: none;
+    cursor: default;
+    text-align: center;
+}   
+
+.form-input:focus {
+    border-color: var(--primary-color);
+    outline: none;
+    box-shadow: 0 0 8px rgba(104, 36, 109, 0.2);
+    cursor: default;
+}
+
 
 .form-group {
     display: flex;

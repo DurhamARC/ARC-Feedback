@@ -142,7 +142,12 @@ class OrcidApp(BaseFlaskApp):
         self.app.route("/")(self.home)
         self.app.route("/publications/sso")(self.orcid_works_search)
         self.app.route("/about")(self.about)
-        self.app.route("/thankyou")(self.thankyou)
+        self.app.route("/thankyou", methods=['GET', 'POST'])(
+            self.thankyou
+        )
+        self.app.route("/form", methods=['GET', 'POST'])(
+            self._limiter.limit("10 per minute")(self.info_form)
+        )
         self.app.route('/publications', methods=['GET', 'POST'])(
             self._limiter.limit("10 per minute")(self.get_orcid_works_data)
         )
@@ -178,10 +183,25 @@ class OrcidApp(BaseFlaskApp):
         return render_template("about.html")
 
     @handle_errors
+    def info_form(self):
+        if request.method == 'POST':
+            action = request.form.get('action')
+            if action == "submit":
+                try:
+                    feedback = request.form.get('feedback')
+                    # db.session.add(Feedback(text=feedback))
+                    # db.session.commit()
+                    return redirect(url_for('thankyou'))
+                except Exception:
+                    logging.exception("Error while saving the message:")
+                    flash('An error occurred while saving the message. Please try again.', 'error')
+                    return redirect(url_for('orcid_works_search'))
+        return render_template("form.html")
+
+    @handle_errors
     def thankyou(self):
         return render_template("thankyou.html")
-
-
+    
     def _fetch_orcid_token(self):
         @self._cache.memoize(timeout=3500)
         def _inner_fetch():
@@ -612,7 +632,7 @@ class OrcidApp(BaseFlaskApp):
             flash('An error occurred while saving the funding records. Please try again.', 'error')
             return redirect(url_for('orcid_works_search'))
 
-        return redirect(url_for('thankyou'))
+        return redirect(url_for('info_form'))
 
     @handle_errors
     def initiate_orcid_auth(self):
