@@ -61,6 +61,7 @@
         --dropdown-bg: white;
         --dropdown-border: #e0e0e0;
         --dropdown-shadow: rgba(0,0,0,0.1);
+        --nav-link-background: #68246D;
     }
 
     body.dark-mode {
@@ -73,6 +74,7 @@
         --dropdown-bg: #404040;
         --dropdown-border: #6a6a6a;
         --dropdown-shadow: rgba(0,0,0,0.4);
+        --nav-link-background: #68246d81;
     }
 
     .dark-mode-toggle {
@@ -216,9 +218,14 @@
         background-color: rgba(104, 36, 109, 0.15);
     }
 
-    body.dark-mode .nav-link:hover,
+    body.dark-mode .nav-link:hover {
+        color: var(--text-color) !important;
+        background-color: rgba(104, 36, 109, 0.217);
+    }
+
     body.dark-mode .nav-link.active {
-        background-color: rgba(157, 91, 162, 0.15) !important;
+        color: var(--text-color) !important;
+        background-color: var(--nav-link-background);
     }
 </style>
 <script>

@@ -4,5 +4,4 @@ __pycache__/
 .env
 SearchApp/*.xlsx
 SearchApp/*.xml
-.r*
 .vscode/
