@@ -42,3 +42,8 @@ class Admin(db.Model):
 
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
+    
+class Feedback(db.Model):
+    __tablename__ = 'feedback'
+    id   = db.Column(db.Integer, primary_key=True)
+    text = db.Column(db.String(300), unique=False, nullable=False)

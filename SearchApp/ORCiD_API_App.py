@@ -35,7 +35,7 @@ def normalise_title(title):
     return normalised
 
 # Import SQLalchemy along with the database models (important)
-from models import db, User, Record, Admin
+from models import db, User, Record, Admin, Feedback
 
 class AdminLoginForm(FlaskForm):
     username = StringField('Username', validators=[DataRequired(), Length(min=4, max=50)])
@@ -189,8 +189,8 @@ class OrcidApp(BaseFlaskApp):
             if action == "submit":
                 try:
                     feedback = request.form.get('feedback')
-                    # db.session.add(Feedback(text=feedback))
-                    # db.session.commit()
+                    db.session.add(Feedback(text=feedback))
+                    db.session.commit()
                     return redirect(url_for('thankyou'))
                 except Exception:
                     logging.exception("Error while saving the message:")
