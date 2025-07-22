@@ -34,6 +34,15 @@ def normalise_title(title):
     normalised = normalised.encode('ascii', 'ignore').decode('ascii')
     return normalised
 
+def sanitise_input(text):
+    if not text:
+        return ""
+    # HTML tags
+    cleaned = re.sub(r'<[^>]*>', '', text)
+    # special characters
+    cleaned = cleaned.replace('"', '&quot;').replace("'", '&#39;')
+    return cleaned[:300]
+
 # Import SQLalchemy along with the database models (important)
 from models import db, User, Record, Admin, Feedback
 
@@ -184,18 +193,32 @@ class OrcidApp(BaseFlaskApp):
 
     @handle_errors
     def info_form(self):
-        action = request.form.get('action')
-        if action == "submit":
+        if request.method == 'POST' and request.form.get('action') == 'submit':
             try:
-                feedback = request.form.get('feedback')
-                db.session.add(Feedback(text=feedback))
-                db.session.commit()
-                return redirect(url_for('thankyou'))
+                raw_feedback = request.form.get('feedback')
+                feedback = sanitise_input(raw_feedback) if raw_feedback else ""
+                orcid = session['orcid_id']
+                submission_id = session.get('current_submission_id')
+
+                if feedback and orcid and submission_id:
+                    db.session.add(Feedback(
+                        text=feedback, 
+                        orcid=orcid,
+                        submission_id=submission_id
+                    ))
+                    db.session.commit()
+                    return redirect(url_for('thankyou'))
+                else:
+                    flash('Feedback cannot be empty.', 'error')
+                    return redirect(url_for('info_form')) 
+                    
             except Exception:
                 logging.exception("Error while saving the message:")
                 flash('An error occurred while saving the message. Please try again.', 'error')
                 return redirect(url_for('orcid_works_search'))
+                
         return render_template("form.html")
+
 
     @handle_errors
     def thankyou(self):
@@ -747,14 +770,18 @@ class OrcidApp(BaseFlaskApp):
     def download_all(self):
         users = User.query.all()
         records = Record.query.all()
+        feedback = Feedback.query.all()
         users_data = [{'id': u.id, 'orcid': u.orcid, 'name': u.name, 'created_at': u.created_at} for u in users]
         records_data = [{'id': r.id, 'orcid': r.orcid, 'title': r.title, 'type': r.type, 'created_at': r.created_at} for r in records]
+        feedback_data = [{'id': f.id, 'text': f.text, 'orcid': f.orcid, 'created_at': f.created_at, 'submission_id': f.submission_id} for f in feedback]
         df_users = pd.DataFrame(users_data)
         df_records = pd.DataFrame(records_data)
+        df_feedback = pd.DataFrame(feedback_data)
         output = BytesIO()
         with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
             df_users.to_excel(writer, sheet_name='Users', index=False)
             df_records.to_excel(writer, sheet_name='Records', index=False)
+            df_feedback.to_excel(writer, sheet_name='Feedback', index=False)
         output.seek(0)
         return send_file(output, download_name='all_data.xlsx', as_attachment=True)
 
@@ -766,14 +793,18 @@ class OrcidApp(BaseFlaskApp):
             end_date = form.end_date.data
             records = Record.query.filter(Record.created_at.between(start_date, end_date)).all()
             users = User.query.filter(User.created_at.between(start_date, end_date)).all()
+            feedback = Feedback.query.filter(Feedback.created_at.between(start_date, end_date)).all()
             users_data = [{'id': u.id, 'orcid': u.orcid, 'name': u.name, 'created_at': u.created_at} for u in users]
             records_data = [{'id': r.id, 'orcid': r.orcid, 'title': r.title, 'type': r.type, 'created_at': r.created_at} for r in records]
+            feedback_data = [{'id': f.id, 'text': f.text, 'orcid': f.orcid, 'created_at': f.created_at, 'submission_id': f.submission_id} for f in feedback]
             df_users = pd.DataFrame(users_data)
             df_records = pd.DataFrame(records_data)
+            df_feedback = pd.DataFrame(feedback_data)
             output = BytesIO()
             with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
                 df_users.to_excel(writer, sheet_name='Users', index=False)
                 df_records.to_excel(writer, sheet_name='Records', index=False)
+                df_feedback.to_excel(writer, sheet_name='Feedback', index=False)
             output.seek(0)
             return send_file(output, download_name=f'data_{start_date}_to_{end_date}.xlsx', as_attachment=True)
         return render_template('admin/download_time_range.html', form=form)
@@ -786,6 +817,7 @@ class OrcidApp(BaseFlaskApp):
                 try:
                     Record.query.delete()
                     User.query.delete()
+                    Feedback.query.delete()
                     db.session.commit()
                     flash('Database cleared successfully', 'success')
                 except Exception as e:
@@ -796,19 +828,34 @@ class OrcidApp(BaseFlaskApp):
             return redirect(url_for('admin_dashboard'))
         return render_template('admin/clear_database.html')
 
-
     @admin_required
     def admin_data(self):
         try:
             page = request.args.get('page', 1, type=int)
             per_page = 25
-            records = db.session.query(Record.id, Record.orcid, User.name, Record.title, Record.type, Record.created_at) \
-                                .join(User, User.orcid == Record.orcid)
-            
-            records = records.order_by(Record.created_at.desc()) \
-                            .paginate(page=page, per_page=per_page, error_out=False)
+
+            records = db.session.query(
+                Record.id, 
+                Record.orcid, 
+                User.name, 
+                Record.title, 
+                Record.type, 
+                Record.created_at,
+                Feedback.text
+            ) \
+            .join(User, User.orcid == Record.orcid) \
+            .outerjoin(
+                Feedback, 
+                db.and_(
+                    Feedback.submission_id == Record.submission_id,
+                    Feedback.orcid == Record.orcid
+                )
+            ) \
+            .order_by(Record.created_at.desc()) \
+            .paginate(page=page, per_page=per_page, error_out=False)
             
             return render_template('admin/data.html', records=records)
+            
         except Exception as e:
             current_app.logger.error(f"Error: {str(e)}")
             flash('Error retrieving data for display.', 'error')

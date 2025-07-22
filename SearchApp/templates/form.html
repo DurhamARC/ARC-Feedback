@@ -12,13 +12,15 @@
             </div>
         {% endif %}
     {% endwith %}
-    <form action="/thankyou" method="post" class="selection-form">
+    <form method="post" class="selection-form">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
         <div class="card">
             <div class="card-content">
                 <div class="field orcid-field">
                     <span><label for="feedback" class="form-label">Add a message<p></p></label></span>
-                    <textarea name="feedback" id="feedback" class="form-input" rows="5" placeholder="Please share your thoughts or feedback here..."></textarea>
+                    <textarea name="feedback" id="feedback" class="form-input" rows="5" maxlength="300" 
+                    oninput="this.value = this.value.replace(/[<>&]/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;'})[c])" 
+                    placeholder="Please share your thoughts or feedback here..."></textarea>
                     <p id="char-counter">300 characters left</p>
                 </div>
                 <button type="submit" name="action" value="submit" class="btn btn-primary">

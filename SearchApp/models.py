@@ -47,3 +47,6 @@ class Feedback(db.Model):
     __tablename__ = 'feedback'
     id   = db.Column(db.Integer, primary_key=True)
     text = db.Column(db.String(300), unique=False, nullable=False)
+    orcid = db.Column(db.String(19), nullable=False)
+    created_at = db.Column(db.DateTime, server_default=db.func.now())
+    submission_id = db.Column(db.String(32), nullable=True)
