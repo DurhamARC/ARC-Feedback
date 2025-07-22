@@ -3,7 +3,8 @@
     --primary-hover: #99599f;
     --secondary-color: #a6ce39;
     --text-color: #333;
-    --text-light: #636363;
+
+    --text-light: #4e4e4e;
     --error-bg: #ffe6e6;
     --error-text: #cc0000;
     --card-shadow: 0 4px 20px rgba(104, 36, 109, 0.08);
@@ -111,12 +112,30 @@ h2 {
     color: var(--primary-color);
 }
 
-p {
-    color: var(--text-light);
-    margin-bottom: 1.5rem;
-    font-size: 1.1rem;
-    line-height: 1.8;
+.info-section {
+    margin: 1.5rem 0 2.5rem;
+    padding: 1.5rem;
+    text-align: center;
+    background: transparent;
+    box-shadow: none;
 }
+
+.info-section .lead {
+    margin: 0 auto;
+    font-size: 1.15rem;
+    color: var(--text-color);
+    line-height: 1.6;
+    max-width: 600px;
+}
+
+.welcome-message .lead {
+    margin: 0 auto;
+    font-size: 1.15rem;
+    color: var(--text-light);
+    line-height: 1.6;
+    max-width: 600px;
+}
+
 
 .lead {
     font-size: 1.25rem;
@@ -139,7 +158,6 @@ p {
 
 .welcome-message {
     text-align: center;
-    -webkit-text-fill-color: var(--primary-color);
     max-width: 800px;
     margin: 0 auto;
     padding: 2rem;
@@ -421,25 +439,9 @@ p {
     border-color: #c0c0c0;
 }
 
-.info-section {
-    margin: 1.5rem 0 2.5rem;
-    padding: 1.5rem;
-    text-align: center;
-    background: transparent;
-    box-shadow: none;
-}
-
-.info-section .lead {
-    margin: 0 auto;
-    font-size: 1.15rem;
-    color: var(--text-light);
-    line-height: 1.6;
-    max-width: 600px;
-    opacity: 0.9;
-}
-
 .text-center {
     text-align: center;
+    color: var(--text-light);
 }
 
 .error-message {

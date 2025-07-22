@@ -17,7 +17,7 @@
         <div class="card">
             <div class="card-content">
                 <div class="field orcid-field">
-                    <span><label for="feedback" class="form-label">Additional Message<p></p></label></span>
+                    <span><label for="feedback" class="form-label">Add a message<p></p></label></span>
                     <textarea name="feedback" id="feedback" class="form-input" rows="5" placeholder="Please share your thoughts or feedback here..."></textarea>
                     <p id="char-counter">300 characters left</p>
                 </div>
@@ -87,8 +87,9 @@
     .form-label {
         margin:auto;
         margin-top: 0.65rem;
-        color: var(--text-color);
-        font-size: 1.25rem;
+        color: var(--primary-color);
+        font-size: 2rem;
+        font-weight: bold;
     }
 
     .form-input {
@@ -104,7 +105,7 @@
         min-width: 200px;
         max-width: 100%;
         min-height: 200px;
-        max-height: 333px; 
+        max-height: 300px; 
         resize: vertical;
     }
 
@@ -153,7 +154,7 @@
             const remaining = 300 - textarea.value.length;
             counter.textContent = `${remaining} characters left`;
             if (remaining <= 0) {
-                counter.style.color = 'red';
+                counter.style.color = "#8a3a8f";
             } else {
                 counter.style.color = '';
             }

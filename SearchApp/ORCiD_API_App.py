@@ -184,18 +184,17 @@ class OrcidApp(BaseFlaskApp):
 
     @handle_errors
     def info_form(self):
-        if request.method == 'POST':
-            action = request.form.get('action')
-            if action == "submit":
-                try:
-                    feedback = request.form.get('feedback')
-                    db.session.add(Feedback(text=feedback))
-                    db.session.commit()
-                    return redirect(url_for('thankyou'))
-                except Exception:
-                    logging.exception("Error while saving the message:")
-                    flash('An error occurred while saving the message. Please try again.', 'error')
-                    return redirect(url_for('orcid_works_search'))
+        action = request.form.get('action')
+        if action == "submit":
+            try:
+                feedback = request.form.get('feedback')
+                db.session.add(Feedback(text=feedback))
+                db.session.commit()
+                return redirect(url_for('thankyou'))
+            except Exception:
+                logging.exception("Error while saving the message:")
+                flash('An error occurred while saving the message. Please try again.', 'error')
+                return redirect(url_for('orcid_works_search'))
         return render_template("form.html")
 
     @handle_errors
