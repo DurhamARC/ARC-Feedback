@@ -23,18 +23,18 @@ Follow these steps to set up and run the application locally:
 
 1. Clone the repository:
 
-   git clone https://github.com/DurhamARC/ARC-Feedback.git
-   cd ARC-Feedback
+   - git clone https://github.com/DurhamARC/ARC-Feedback.git
+   - cd ARC-Feedback
 
 
 2. Set up a virtual environment:
 
-   python -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   - python -m venv venv
+   - source venv/bin/activate  # On Windows: venv\Scripts\activate
    
 3. Install dependencies:
 
-   pip install -r requirements.txt
+   - pip install -r requirements.txt
 
 
 4. Configure environment variables:
@@ -48,7 +48,7 @@ Follow these steps to set up and run the application locally:
    - ENABLE_ORCID_LOGIN=true
    - DEBUG=true
 
-   - Replace placeholders with actual values:
+     Replace placeholders with actual values:
      - `DATABASE_URL`: Use `sqlite:///feedback.db` for local SQLite development or a PostgreSQL URI 
        (`postgresql://user:password@localhost/dbname`) for production, as supported by the `docker-compose.yml` configuration.
      - `APP_SECRET_KEY`: A securely generated secret key (can be generated using `secrets.token_hex(16)` in Python).
