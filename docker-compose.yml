@@ -31,8 +31,6 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-#    volumes:
-#      - ./SearchApp/migrations:/app/SearchApp/migrations
     command: gunicorn --bind 0.0.0.0:5000 wsgi:app
     networks:
       - backend

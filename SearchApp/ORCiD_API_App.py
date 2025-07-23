@@ -193,6 +193,14 @@ class OrcidApp(BaseFlaskApp):
 
     @handle_errors
     def info_form(self):
+        if request.method == 'GET':
+            if 'orcid_id' in session:
+                orcid_id = session['orcid_id']
+                source = 'session'
+            else:
+                flash("Please log in with ORCID.", "info")
+                return redirect(url_for('orcid_works_search'))
+
         if request.method == 'POST' and request.form.get('action') == 'submit':
             try:
                 raw_feedback = request.form.get('feedback')
@@ -376,7 +384,7 @@ class OrcidApp(BaseFlaskApp):
                 orcid_id = session['orcid_id']
                 source = 'session'
             else:
-                flash("Please log in with ORCID on the first page.", "info")
+                flash("Please log in with ORCID.", "info")
                 return redirect(url_for('no_publications'))
 
         elif request.method == 'POST':
@@ -479,7 +487,7 @@ class OrcidApp(BaseFlaskApp):
             )
 
         try:
-            name = session["full_name"]
+            name = session.get("full_name")
             titles = self._get_fundings_from_orcid(orcid_id, access_token)
 
             if not titles:
