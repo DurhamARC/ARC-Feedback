@@ -25,7 +25,7 @@
 body.dark-mode {
     --primary-color: #9d5ba2;
     --primary-hover: #b46bb9;
-    --body-bg: #252525;
+    --body-bg: #252525e9;
     --card-bg: #353535;
     --navbar-bg: #353535;
     --text-color: #e8e8e8;
@@ -94,8 +94,6 @@ body {
 h1, h2, h3 {
     font-weight: 700;
     letter-spacing: -0.5px;
-    margin-bottom: 1.25rem;
-    line-height: 1.3;
 }
 
 h1 {
@@ -104,7 +102,6 @@ h1 {
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
-    display: inline-block;
 }
 
 h2 {
@@ -113,7 +110,7 @@ h2 {
 }
 
 .info-section {
-    margin: 1.5rem 0 2.5rem;
+    margin: 0.5rem 0 2rem;
     padding: 1.5rem;
     text-align: center;
     background: transparent;
@@ -132,7 +129,6 @@ h2 {
     margin: 0 auto;
     font-size: 1.15rem;
     color: var(--text-light);
-    line-height: 1.6;
     max-width: 600px;
 }
 
@@ -142,6 +138,14 @@ h2 {
     color: var(--text-color);
     opacity: 0.9;
     max-width: 700px;
+}
+
+.about-lead {
+    font-size: 1.25rem;
+    color: var(--text-color);
+    opacity: 0.9;
+    max-width: 700px;
+    margin-top: 22px;
 }
 
 .page-container {
@@ -160,9 +164,9 @@ h2 {
     text-align: center;
     max-width: 800px;
     margin: 0 auto;
-    padding: 2rem;
+    padding: 2.2rem;
     background: var(--card-bg);
-    border-radius: 2rem;
+    border-radius: 2.7rem;
     box-shadow: var(--card-shadow);
     width: 100%;
     zoom: 83%;
@@ -195,6 +199,19 @@ h2 {
     width: 100%;
     margin: 3rem auto;
 }
+.about-feature-card {
+    background: var(--card-bg);
+    border-radius: 2rem;
+    box-shadow: var(--card-shadow);
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1.5rem;
+    text-align: center;
+    margin-top: 0.3rem;
+}
 
 .feature-card {
     background: var(--card-bg);
@@ -207,10 +224,10 @@ h2 {
     justify-content: center;
     gap: 1.5rem;
     text-align: center;
+    margin-top: 2.7rem;
 }
 
 .feature-card h2 {
-    margin-bottom: 1rem;
     font-size: 1.5rem;
 }
 
@@ -233,6 +250,16 @@ h2 {
     opacity: 0;
     margin: 0.3rem 0;
     animation: fadeIn 0.5s ease-out 0.4s forwards;
+}
+
+.home-separator-line {
+    height: 0.08px;
+    background-color: #e0e0e0;
+    opacity: 0;
+    margin: 0.3rem 0;
+    animation: fadeIn 0s ease-out 0s forwards;
+    width: 79.3%;
+    margin-left: 11%;
 }
 
 .title-orcid {
