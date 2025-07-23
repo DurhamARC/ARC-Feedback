@@ -1,6 +1,6 @@
 
 
-*ARC Feedback*
+*ARC-Feedback*
 
 **Description**
 
@@ -25,7 +25,7 @@ Follow these steps to set up and run the application locally:
 
 1. Clone the repository:
 
-   - git clone https://github.com/DurhamARC/ARC-Feedback.git
+   - git clone https://github.com/DurhamARC/ARC-Feedback
    - cd ARC-Feedback
 
 
