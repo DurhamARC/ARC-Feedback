@@ -4,7 +4,9 @@
 
 **Description**
 
-This is a Flask web application designed to collect feedback on research outputs that utilised Advanced Research Computing (ARC) resources, platforms, or staff support at Durham University. The application enables users to authenticate via ORCID, retrieve their publication and funding data from the ORCID API, and submit feedback on their research outputs. It includes an admin interface for managing and downloading the collected data, making it a valuable tool for tracking and analysing research impact.
+- This is a Flask web application designed to collect feedback on research outputs that utilised Advanced Research Computing (ARC) resources, platforms, or staff support at Durham University.
+- The application enables users to authenticate via ORCID, retrieve their publication and funding data from the ORCID API, and submit feedback on their research outputs.
+- It includes an admin interface for managing and downloading the collected data, making it a valuable tool for tracking and analysing research impact.
 
 **Features**
 - User authentication via ORCID: Secure login using ORCID credentials.
@@ -58,20 +60,20 @@ Follow these steps to set up and run the application locally:
 5. Initialise the database:
    With Flask-Migrate configured in `wsgi.py`, run:
    
-   flask db upgrade
+   - flask db upgrade
    
    (This applies migrations to create the database tables. Alternatively, running the app once with a valid `DATABASE_URL` will initialise the tables using `db.create_all()` from `ORCiD_API_App.py`)
 
 6. Create an admin user:
    Use the custom CLI command defined in `ORCiD_API_App.py`:
    
-   flask create-admin <username> <password>
+   - flask create-admin <username> <password>
 
    (Replace `<username>` and `<password>` with your desired credentials)
 
 7. Run the application:
    
-   flask run
+   - flask run
    
    (The application will be available at `http://localhost:5000`)
 
@@ -101,8 +103,8 @@ The application uses the following database models, as defined in `models.py`:
 
 **Contributing**
 
-Contributions are welcome! Please submit issues or pull requests on GitHub. For major changes, open an issue first to discuss proposed updates.
+- Contributions are welcome! Please submit issues or pull requests. For major changes, open an issue first to discuss proposed updates.
 
 **Licence**
 
-This project is licenced under the Mozilla Public License Version 2.0. See the [LICENSE](LICENSE) file for details.
+- This project is licenced under the Mozilla Public License Version 2.0. See the [LICENSE](LICENSE) file for details.
