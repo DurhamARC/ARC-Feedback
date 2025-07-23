@@ -1,6 +1,6 @@
+<img width="888" height="888" alt="image" src="https://github.com/user-attachments/assets/9a0f943e-e736-4b7d-bc80-1806e84fe928" />
 
-
-*ARC-Feedback*
+<h1>ARC-Feedback</h1>
 
 **Description**
 
@@ -21,11 +21,12 @@
 - ORCID API: Facilitates user authentication and data retrieval.
 
 **Setup Instructions**
+
 Follow these steps to set up and run the application locally:
 
 1. Clone the repository:
 
-   - git clone https://github.com/DurhamARC/ARC-Feedback
+   - git clone `https://github.com/DurhamARC/ARC-Feedback`
    - cd ARC-Feedback
 
 
@@ -40,6 +41,7 @@ Follow these steps to set up and run the application locally:
 
 
 4. Configure environment variables:
+
    Create a `.env` file in the root directory with the following variables:
   
    - DATABASE_URL=your_database_url
@@ -50,28 +52,28 @@ Follow these steps to set up and run the application locally:
    - ENABLE_ORCID_LOGIN=true
    - DEBUG=true
 
-     Replace placeholders with actual values:
+   Replace placeholders with actual values:
      - `DATABASE_URL`: Use `sqlite:///feedback.db` for local SQLite development or a PostgreSQL URI 
        (`postgresql://user:password@localhost/dbname`) for production, as supported by the `docker-compose.yml` configuration.
      - `APP_SECRET_KEY`: A securely generated secret key (can be generated using `secrets.token_hex(16)` in Python).
      - `ORCID_CLIENT_ID` and `ORCID_CLIENT_SECRET`: Obtain these from your ORCID developer account.
      - `ORCID_REDIRECT_URI`: The URI registered with ORCID (`http://localhost:5000/auth/orcid/callback` for local development).
 
-5. Initialise the database:
+6. Initialise the database:
    With Flask-Migrate configured in `wsgi.py`, run:
    
    - flask db upgrade
    
    (This applies migrations to create the database tables. Alternatively, running the app once with a valid `DATABASE_URL` will initialise the tables using `db.create_all()` from `ORCiD_API_App.py`)
 
-6. Create an admin user:
+7. Create an admin user:
    Use the custom CLI command defined in `ORCiD_API_App.py`:
    
    - flask create-admin <username> <password>
 
    (Replace `<username>` and `<password>` with your desired credentials)
 
-7. Run the application:
+8. Run the application:
    
    - flask run
    
@@ -103,7 +105,8 @@ The application uses the following database models, as defined in `models.py`:
 
 **Contributing**
 
-- Contributions are welcome! Please submit issues or pull requests. For major changes, open an issue first to discuss proposed updates.
+- Contributions are welcome! Please submit issues or pull requests.
+- For major changes, open an issue first to discuss proposed updates.
 
 **Licence**
 
