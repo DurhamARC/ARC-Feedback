@@ -3,9 +3,8 @@
 *ARC Feedback*
 
 **Description**
-This is a Flask web application designed to collect feedback on research outputs that utilised Advanced Research Computing (ARC) resources, platforms, or staff support at Durham University.
-The application enables users to authenticate via ORCID, retrieve their publication and funding data from the ORCID API, and submit feedback on their research outputs. 
-It includes an admin interface for managing and downloading the collected data, making it a valuable tool for tracking and analysing research impact.
+
+This is a Flask web application designed to collect feedback on research outputs that utilised Advanced Research Computing (ARC) resources, platforms, or staff support at Durham University. The application enables users to authenticate via ORCID, retrieve their publication and funding data from the ORCID API, and submit feedback on their research outputs. It includes an admin interface for managing and downloading the collected data, making it a valuable tool for tracking and analysing research impact.
 
 **Features**
 - User authentication via ORCID: Secure login using ORCID credentials.
@@ -41,13 +40,13 @@ Follow these steps to set up and run the application locally:
 4. Configure environment variables:
    Create a `.env` file in the root directory with the following variables:
   
-   DATABASE_URL=your_database_url
-   APP_SECRET_KEY=your_secret_key
-   ORCID_CLIENT_ID=your_orcid_client_id
-   ORCID_CLIENT_SECRET=your_orcid_client_secret
-   ORCID_REDIRECT_URI=your_orcid_redirect_uri
-   ENABLE_ORCID_LOGIN=true
-   DEBUG=true
+   - DATABASE_URL=your_database_url
+   - APP_SECRET_KEY=your_secret_key
+   - ORCID_CLIENT_ID=your_orcid_client_id
+   - ORCID_CLIENT_SECRET=your_orcid_client_secret
+   - ORCID_REDIRECT_URI=your_orcid_redirect_uri
+   - ENABLE_ORCID_LOGIN=true
+   - DEBUG=true
 
    - Replace placeholders with actual values:
      - `DATABASE_URL`: Use `sqlite:///feedback.db` for local SQLite development or a PostgreSQL URI 
@@ -101,7 +100,9 @@ The application uses the following database models, as defined in `models.py`:
   - Secure session cookies.
 
 **Contributing**
+
 Contributions are welcome! Please submit issues or pull requests on GitHub. For major changes, open an issue first to discuss proposed updates.
 
 **Licence**
+
 This project is licenced under the Mozilla Public License Version 2.0. See the [LICENSE](LICENSE) file for details.
