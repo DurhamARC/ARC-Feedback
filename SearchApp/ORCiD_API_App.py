@@ -37,9 +37,9 @@ def normalise_title(title):
 def sanitise_input(text):
     if not text:
         return ""
-    # HTML tags
+    
+    # HTML tags and quotes sanitisation
     cleaned = re.sub(r'<[^>]*>', '', text)
-    # special characters
     cleaned = cleaned.replace('"', '&quot;').replace("'", '&#39;')
     return cleaned[:300]
 
@@ -196,7 +196,6 @@ class OrcidApp(BaseFlaskApp):
         if request.method == 'GET':
             if 'orcid_id' in session:
                 orcid_id = session['orcid_id']
-                source = 'session'
             else:
                 flash("Please log in with ORCID.", "info")
                 return redirect(url_for('orcid_works_search'))
@@ -250,8 +249,6 @@ class OrcidApp(BaseFlaskApp):
             except requests.exceptions.RequestException as e:
                 return flash(f"Error: Request exception inside of fetch_orcid_token: {e}", "error")
         return _inner_fetch()
-    
-    #Utilities start
 
     @handle_errors
     def reset_publications(self):
@@ -283,8 +280,6 @@ class OrcidApp(BaseFlaskApp):
     @handle_errors
     def cache_fetcher(self, orcid_id):
         return f"orcid_works_{orcid_id}"
-
-    #Utilities end
     
     @handle_errors
     def no_fundings(self):
@@ -300,6 +295,7 @@ class OrcidApp(BaseFlaskApp):
 
     def _get_name_from_orcid(self, orcid_id, access_token):
         # https://info.orcid.org/documentation/api-tutorials/api-tutorial-read-data-on-a-record/
+
         url = f'https://pub.orcid.org/v3.0/{orcid_id}/person'
         headers = {
             'Accept': 'application/vnd.orcid+xml',
@@ -310,13 +306,13 @@ class OrcidApp(BaseFlaskApp):
 
         root = ET.fromstring(response.content)
         
-        # Define namespaces used in OrcID XML
+        # Define namespaces for ORCID XML
         namespaces = {
             'person': 'http://www.orcid.org/ns/person',
             'personal-details': 'http://www.orcid.org/ns/personal-details',
         }
         
-        # Find the name element
+        # Find the name element in the XML
         name_element = root.find('.//person:name', namespaces)
         
         if name_element is not None:
@@ -377,19 +373,16 @@ class OrcidApp(BaseFlaskApp):
     @handle_errors
     def get_orcid_works_data(self):
         orcid_id = None
-        source = None
 
         if request.method == 'GET':
             if 'orcid_id' in session:
                 orcid_id = session['orcid_id']
-                source = 'session'
             else:
                 flash("Please log in with ORCID.", "info")
                 return redirect(url_for('no_publications'))
 
         elif request.method == 'POST':
             orcid_id = request.form.get('orcidInput')
-            source = 'form'
             if not self.validate_orcid_id(orcid_id):
                 flash("Invalid ORCiD format submitted. Use XXXX-XXXX-XXXX-XXXX.", "error")
                 return redirect(url_for('orcid_works_search'))
@@ -455,12 +448,10 @@ class OrcidApp(BaseFlaskApp):
     @handle_errors
     def get_orcid_fundings_data(self):
         orcid_id = None
-        source = None
 
         if request.method == 'GET':
             if 'orcid_id' in session:
                 orcid_id = session['orcid_id']
-                source = 'session'
             else:
                 flash("Please log in with ORCID or enter your ORCID ID on the search page.", "error")
                 return redirect(url_for('orcid_works_search'))
