@@ -1,27 +1,26 @@
-<img width="888" height="888" alt="image" src="https://github.com/user-attachments/assets/8178663a-b252-4e1d-9e1a-e68e14dc195f" />
+<img width="100%" alt="roundcorners" src="https://github.com/user-attachments/assets/a0858ef9-d6ff-4028-904e-4356be1b833c" />
 
+# ARC-Feedback
 
-<h1>ARC-Feedback</h1>
-
-**Description**
+## Description
 
 - This is a Flask web application designed to collect feedback on research outputs that utilised Advanced Research Computing (ARC) resources, platforms, or staff support at Durham University.
 - The application enables users to authenticate via ORCID, retrieve their publication and funding data from the ORCID API, and submit feedback on their research outputs.
 - It includes an admin interface for managing and downloading the collected data, making it a valuable tool for tracking and analysing research impact.
 
-**Features**
+### Features
 - User authentication via ORCID: Secure login using ORCID credentials.
 - Retrieval of user's publication and funding data from ORCID: Fetches works and funding records associated with a user's ORCID ID.
 - Form for users to provide feedback on their research outputs: Allows users to submit feedback linked to specific submissions.
 - Admin interface for managing and downloading collected data: Provides administrators with tools to view, export, and clear data.
 
-**Technologies Used**
+### Technologies Used
 - Flask: A lightweight Python web framework powering the application.
 - SQLAlchemy: Handles database management and object-relational mapping (ORM).
 - Flask-WTF: Manages form handling and includes CSRF protection.
 - ORCID API: Facilitates user authentication and data retrieval.
 
-**Setup Instructions**
+## Setup Instructions
 
 Follow these steps to set up and run the application locally:
 
@@ -81,7 +80,7 @@ flask run
 
 Note: For production, consider using a PostgreSQL database (as configured in `docker-compose.yml`) and running with Gunicorn, as specified in `Dockerfile.production`.
 
-**Database Models**
+## Database Models
 
 The application uses the following database models, as defined in `models.py`:
 
@@ -94,7 +93,7 @@ The application uses the following database models, as defined in `models.py`:
 - Feedback: Stores feedback provided by users.
   - Fields: `id`, `text` (up to 300 characters), `orcid`, `created_at`, `submission_id` (links to Records).
 
-**Security Considerations**
+## Security Considerations
 - Keep dependencies up to date: Mitigate vulnerabilities, as listed in `requirements.txt`.
 - Ensure APP_SECRET_KEY is securely generated: Critical for session security, set via `.env`.
 - Limit admin access and use strong passwords: Enforced by hashed passwords in the Admin model.
@@ -103,11 +102,11 @@ The application uses the following database models, as defined in `models.py`:
   - Rate limiting with Flask-Limiter
   - Secure session cookies.
 
-**Contributing**
+## Contributing
 
 - Contributions are welcome! Please submit issues or pull requests.
 - For major changes, open an issue first to discuss proposed updates.
 
-**Licence**
+## Licence
 
 - This project is licenced under the Mozilla Public License Version 2.0. See the [LICENSE](LICENSE) file for details.
