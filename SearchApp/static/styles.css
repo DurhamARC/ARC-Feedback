@@ -243,6 +243,10 @@ h2 {
     gap: 0.75rem; 
 }
 
+.thanks-a:visited {
+    color: var(--primary-color) !important;
+}
+
 .separator-line {
     height: 1.3px;
     background-color: #e0e0e0;
