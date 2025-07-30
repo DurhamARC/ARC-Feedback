@@ -47,3 +47,4 @@ WTForms>=3.2.1
 XlsxWriter>=3.2.3
 gunicorn>=22.0.0
 pytest>=8.2.0
+bleach>=6.1.0
