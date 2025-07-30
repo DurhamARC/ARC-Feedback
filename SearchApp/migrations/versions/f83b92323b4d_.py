@@ -24,6 +24,10 @@ def upgrade():
     )
     
     with op.batch_alter_table('feedback', schema=None) as batch_op:
+        op.create_table('feedback',
+            sa.Column('id', sa.Integer(), nullable=False),
+            sa.PrimaryKeyConstraint('id')
+        )
         batch_op.add_column(sa.Column('text', sa.String(length=300), nullable=False))
 
     # ### end Alembic commands ###
