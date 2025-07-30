@@ -776,11 +776,14 @@ class OrcidApp(BaseFlaskApp):
         df_users = pd.DataFrame(users_data)
         df_records = pd.DataFrame(records_data)
         df_feedback = pd.DataFrame(feedback_data)
+        df_data = pd.concat([df_users, df_records, df_feedback], axis=1)
         output = BytesIO()
         with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
             df_users.to_excel(writer, sheet_name='Users', index=False)
             df_records.to_excel(writer, sheet_name='Records', index=False)
             df_feedback.to_excel(writer, sheet_name='Feedback', index=False)
+            df_data.to_excel(writer, sheet_name='Data', index=False)
+            
         output.seek(0)
         return send_file(output, download_name='all_data.xlsx', as_attachment=True)
 
@@ -799,11 +802,13 @@ class OrcidApp(BaseFlaskApp):
             df_users = pd.DataFrame(users_data)
             df_records = pd.DataFrame(records_data)
             df_feedback = pd.DataFrame(feedback_data)
+            df_data = pd.concat([df_users, df_records, df_feedback], axis=1)
             output = BytesIO()
             with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
                 df_users.to_excel(writer, sheet_name='Users', index=False)
                 df_records.to_excel(writer, sheet_name='Records', index=False)
                 df_feedback.to_excel(writer, sheet_name='Feedback', index=False)
+                df_data.to_excel(writer, sheet_name='Data', index=False)
             output.seek(0)
             return send_file(output, download_name=f'data_{start_date}_to_{end_date}.xlsx', as_attachment=True)
         return render_template('admin/download_time_range.html', form=form)
