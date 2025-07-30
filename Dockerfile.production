@@ -3,7 +3,7 @@
 FROM python:3.13.2-slim-bookworm
 
 # Set environment variables
-ENV FLASK_APP=ORCiD_API_App.py
+ENV FLASK_APP=wsgi.py:app
 ENV FLASK_ENV=production
 
 WORKDIR /app
