@@ -1,4 +1,5 @@
-<img width="888" height="888" alt="image" src="https://github.com/user-attachments/assets/9a0f943e-e736-4b7d-bc80-1806e84fe928" />
+<img width="888" height="888" alt="image" src="https://github.com/user-attachments/assets/8178663a-b252-4e1d-9e1a-e68e14dc195f" />
+
 
 <h1>ARC-Feedback</h1>
 
@@ -25,33 +26,32 @@
 Follow these steps to set up and run the application locally:
 
 1. Clone the repository:
-
-   - git clone `https://github.com/DurhamARC/ARC-Feedback`
-   - cd ARC-Feedback
-
-
+```bash
+git clone https://github.com/DurhamARC/ARC-Feedback
+cd ARC-Feedback
+```
 2. Set up a virtual environment:
-
-   - python -m venv venv
-   - source venv/bin/activate  # On Windows: venv\Scripts\activate
-   
+```bash
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+```
 3. Install dependencies:
-
-   - pip install -r requirements.txt
-
+```bash
+pip install -r requirements.txt
+```
 
 4. Configure environment variables:
 
    Create a `.env` file in the root directory with the following variables:
-  
-   - DATABASE_URL=your_database_url
-   - APP_SECRET_KEY=your_secret_key
-   - ORCID_CLIENT_ID=your_orcid_client_id
-   - ORCID_CLIENT_SECRET=your_orcid_client_secret
-   - ORCID_REDIRECT_URI=your_orcid_redirect_uri
-   - ENABLE_ORCID_LOGIN=true
-   - DEBUG=true
-
+```bash
+DATABASE_URL=your_database_url
+APP_SECRET_KEY=your_secret_key
+ORCID_CLIENT_ID=your_orcid_client_id
+ORCID_CLIENT_SECRET=your_orcid_client_secret
+ORCID_REDIRECT_URI=your_orcid_redirect_uri
+ENABLE_ORCID_LOGIN=true
+DEBUG=true
+```
    Replace placeholders with actual values:
      - `DATABASE_URL`: Use `sqlite:///feedback.db` for local SQLite development or a PostgreSQL URI 
        (`postgresql://user:password@localhost/dbname`) for production, as supported by the `docker-compose.yml` configuration.
@@ -61,22 +61,22 @@ Follow these steps to set up and run the application locally:
 
 6. Initialise the database:
    With Flask-Migrate configured in `wsgi.py`, run:
-   
-   - flask db upgrade
-   
+```bash
+flask db upgrade
+```
    (This applies migrations to create the database tables. Alternatively, running the app once with a valid `DATABASE_URL` will initialise the tables using `db.create_all()` from `ORCiD_API_App.py`)
 
 7. Create an admin user:
    Use the custom CLI command defined in `ORCiD_API_App.py`:
-   
-   - flask create-admin <username> <password>
-
-   (Replace `<username>` and `<password>` with your desired credentials)
+```bash
+flask create-admin username password
+```
+   (Replace `username` and `password` with your desired credentials)
 
 8. Run the application:
-   
-   - flask run
-   
+```bash
+flask run
+```
    (The application will be available at `http://localhost:5000`)
 
 Note: For production, consider using a PostgreSQL database (as configured in `docker-compose.yml`) and running with Gunicorn, as specified in `Dockerfile.production`.
