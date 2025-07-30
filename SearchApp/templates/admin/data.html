@@ -15,14 +15,18 @@
                 <th>Title</th>
                 <th>Type</th>
                 <th>Created At</th>
-            </tr>
+                <th>Feedback</th> </tr>
         </thead>
         <tbody>
             {% for record in records.items %}
             <tr>
-                {% for column in record %}
-                <td>{{ column }}</td>
-                {% endfor %}
+                <td>{{ record[0] }}</td>
+                <td>{{ record[1] }}</td>
+                <td>{{ record[2] }}</td>
+                <td>{{ record[3] }}</td>
+                <td>{{ record[4] }}</td>
+                <td>{{ record[5] }}</td>
+                <td>{{ record[6] }}</td>
             </tr>
             {% endfor %}
         </tbody>
