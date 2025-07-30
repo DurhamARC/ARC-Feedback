@@ -1,4 +1,4 @@
-from flask import Flask, redirect, render_template, request, jsonify, current_app, flash, url_for, session, abort, send_file
+from flask import Flask, redirect, render_template, request, current_app, flash, url_for, session, abort, send_file
 from wtforms import StringField, PasswordField, SubmitField, DateField
 from wtforms.validators import DataRequired, Length
 from flask_limiter.util import get_remote_address
@@ -10,20 +10,22 @@ from flask_caching import Cache
 from flask_wtf import FlaskForm
 from datetime import timedelta
 from dotenv import load_dotenv
-from functools import wraps
 from io import BytesIO
 import pandas as pd
 import requests
 import logging
 import secrets
-import bleach
 import click
 import re
 import os
 
+# load environment variables from the .env file
 load_dotenv()
 
-# Import models and database setup (Ensures 'db' is initialised)
+# utility functions
+from utils import *
+
+# models and database setup (ensures 'db' is initialised)
 from models import db, User, Record, Admin, Feedback
 
 class AdminLoginForm(FlaskForm):
@@ -36,40 +38,11 @@ class DateRangeForm(FlaskForm):
     end_date = DateField('End Date', format='%Y-%m-%d', validators=[DataRequired()])
     submit = SubmitField('Download')
 
-def admin_required(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if 'admin_id' not in session:
-            flash('Please log in to access this page.', 'warning')
-            return redirect(url_for('admin_login'))
-        return f(*args, **kwargs)
-    return decorated_function
-
 def init_db(app):
     def wrapper():
         with app.app_context():
             db.create_all()
     return wrapper
-
-def normalise_title(title):
-    if not title or not isinstance(title, str):
-        return ""
-    
-    normalised = title.lower()
-    normalised = re.sub(r'^(the|a|an)\s+', '', normalised)
-    normalised = re.sub(r'[^\w\s]', '', normalised)
-    normalised = re.sub(r'\s+', ' ', normalised).strip()
-    normalised = re.sub(r'&[a-zA-Z0-9#]+;', '', normalised)
-    normalised = normalised.encode('ascii', 'ignore').decode('ascii')
-    return normalised
-
-def sanitise_input(text):
-    if not text:
-        return ""
-    
-    # Use bleach to clean the input text by stripping all tags
-    cleaned = bleach.clean(text, tags=[], attributes={}, strip=True)
-    return cleaned[:300]
 
 class BaseFlaskApp:
     def __init__(self, app_name):
@@ -95,21 +68,6 @@ class BaseFlaskApp:
 
     def run(self, *args, **kwargs):
         self.app.run(*args, **kwargs)
-
-def handle_errors(f):
-    @wraps(f)
-    def wrapper(*args, **kwargs):
-        try:
-            return f(*args, **kwargs)
-        except requests.exceptions.RequestException as e:
-            current_app.logger.error(f"API request failed: {str(e)}")
-            flash("Service temporarily unavailable. Please try again later.", "error")
-            return redirect(url_for('home'))
-        except Exception as e:
-            current_app.logger.error(f"Unexpected error in {f.__name__}: {str(e)}")
-            flash("An unexpected error occurred. Please try again.", "error")
-            return redirect(url_for('home'))
-    return wrapper
 
 class OrcidApp(BaseFlaskApp):
     def __init__(self, app_name):
@@ -163,13 +121,13 @@ class OrcidApp(BaseFlaskApp):
         self.app.route('/fundings', methods=['GET', 'POST'])(
             self._limiter.limit("10 per minute")(self.get_orcid_fundings_data)
         )
-        self.app.route('/publications/empty', methods=['GET', 'POST'])(self.no_publications)
-        self.app.route('/fundings/empty', methods=['GET', 'POST'])(self.no_fundings)
-        self.app.route('/api/token', methods=['GET', 'POST'])(self.get_access_token)
+        self.app.route('/publications/empty', methods=['GET', 'POST'])(no_publications)
+        self.app.route('/fundings/empty', methods=['GET', 'POST'])(no_fundings)
+        self.app.route('/api/token', methods=['GET', 'POST'])(get_access_token)
         self.app.route('/process/publications', methods=['POST'])(self.process_works_form)
         self.app.route('/process/fundings', methods=['POST'])(self.process_fundings_form)
-        self.app.route('/auth/orcid')(self.initiate_orcid_auth)
-        self.app.route('/auth/orcid/callback')(self.handle_orcid_callback)
+        self.app.route('/auth/orcid')(initiate_orcid_auth)
+        self.app.route('/auth/orcid/callback')(handle_orcid_callback)
         self.app.route('/admin/login', methods=['GET', 'POST'])(self.admin_login)
         self.app.route('/admin/logout')(self.admin_logout)
         self.app.route('/admin/dashboard')(self.admin_dashboard)
@@ -177,7 +135,7 @@ class OrcidApp(BaseFlaskApp):
         self.app.route('/admin/download/time_range', methods=['GET', 'POST'])(self.download_time_range)
         self.app.route('/admin/clear_database', methods=['GET', 'POST'])(self.clear_database)
         self.app.route('/admin/data')(self.admin_data)
-        self.app.route('/reset/publications')(self.reset_publications)
+        self.app.route('/reset/publications')(reset_publications)
 
     @handle_errors
     def home(self):
@@ -230,146 +188,7 @@ class OrcidApp(BaseFlaskApp):
     @handle_errors
     def thankyou(self):
         return render_template("thankyou.html")
-    
-    def _fetch_orcid_token(self):
-        @self._cache.memoize(timeout=3500)
-        def _inner_fetch():
-            url = "https://orcid.org/oauth/token"
-            headers = {"Accept": "application/json"}
-            data = {
-                "client_id": os.getenv("ORCID_CLIENT_ID"),
-                "client_secret": os.getenv("ORCID_CLIENT_SECRET"),
-                "grant_type": "client_credentials",
-                "scope": "/read-public"
-            }
-            try:
-                response = requests.post(url, headers=headers, data=data, timeout=10)
-                response.raise_for_status()
-                return response.json().get("access_token")
-            except requests.exceptions.RequestException as e:
-                return flash(f"Error: Request exception inside of fetch_orcid_token: {e}", "error")
-        return _inner_fetch()
 
-    @handle_errors
-    def reset_publications(self):
-        if 'orcid_id' not in session or 'current_submission_id' not in session:
-            flash("Session expired. Please start over.", "error")
-            return redirect(url_for('orcid_works_search'))
-        orcid_id = session['orcid_id']
-        submission_id = session['current_submission_id']
-        try:
-            Record.query.filter_by(orcid=orcid_id, type='publication', submission_id=submission_id).delete()
-            db.session.commit()
-        except Exception as e:
-            db.session.rollback()
-            flash("An error occurred while removing previous selections.", "error")
-        return redirect(url_for('get_orcid_works_data'))
-
-    @handle_errors
-    def get_access_token(self):
-        token = self._fetch_orcid_token()
-        if token:
-            return jsonify({"access_token": token})
-        else:
-            return jsonify({"error": "Failed to fetch token", "details": "Check server logs"}), 500
-
-    def validate_orcid_id(self, orcid_id):
-        pattern = r'^\d{4}-\d{4}-\d{4}-\d{3}[\dX]$'
-        return re.match(pattern, orcid_id.strip()) is not None
-
-    @handle_errors
-    def cache_fetcher(self, orcid_id):
-        return f"orcid_works_{orcid_id}"
-    
-    @handle_errors
-    def no_fundings(self):
-        session_orcid = session.get('orcid_id')
-        full_name = session.get("full_name")
-        return render_template('fundings_results.html', orcidID=session_orcid, username=full_name)
-
-    @handle_errors
-    def no_publications(self):
-        session_orcid = session.get('orcid_id')
-        full_name = session.get("full_name")
-        return render_template('works_results.html', orcidID=session_orcid, username=full_name)
-
-    def _get_name_from_orcid(self, orcid_id, access_token):
-        # https://info.orcid.org/documentation/api-tutorials/api-tutorial-read-data-on-a-record/
-
-        url = f'https://pub.orcid.org/v3.0/{orcid_id}/person'
-        headers = {
-            'Accept': 'application/vnd.orcid+xml',
-            'Authorization': f'Bearer {access_token}'
-        }
-        response = requests.get(url, headers=headers, timeout=15)
-        response.raise_for_status()
-
-        root = ET.fromstring(response.content)
-        
-        # Define namespaces for ORCID XML
-        namespaces = {
-            'person': 'http://www.orcid.org/ns/person',
-            'personal-details': 'http://www.orcid.org/ns/personal-details',
-        }
-        
-        # Find the name element in the XML
-        name_element = root.find('.//person:name', namespaces)
-        
-        if name_element is not None:
-            # Extract given names and family name
-            given_names_elem = name_element.find('personal-details:given-names', namespaces)
-            family_name_elem = name_element.find('personal-details:family-name', namespaces)
-            
-            given_names = given_names_elem.text if given_names_elem is not None else ""
-            family_name = family_name_elem.text if family_name_elem is not None else ""
-            
-            # Combine the names
-            full_name = f"{given_names} {family_name}".strip()
-            return full_name
-        return None
-    
-    def _get_works_from_orcid(self, orcid_id, access_token):
-        url = f'https://pub.orcid.org/v3.0/{orcid_id}/works'
-        headers = {
-            'Accept': 'application/vnd.orcid+xml',
-            'Authorization': f'Bearer {access_token}'
-        }
-        response = requests.get(url, headers=headers, timeout=15)
-        response.raise_for_status()
-
-        namespaces = {
-            'common': 'http://www.orcid.org/ns/common',
-            'work': 'http://www.orcid.org/ns/work',
-        }
-
-        root = ET.fromstring(response.text)
-
-        titles = [title.text for title in root.findall('.//work:title/common:title', namespaces) if title.text]
-        normalised_titles = {normalise_title(title): title for title in titles if title}
-        return list(normalised_titles.values())
-    
-    def _get_fundings_from_orcid(self, orcid_id, access_token):
-        url = f'https://pub.orcid.org/v3.0/{orcid_id}/fundings'
-        headers = {
-            'Accept': 'application/vnd.orcid+xml',
-            'Authorization': f'Bearer {access_token}'
-        }
-
-        response = requests.get(url, headers=headers, timeout=15)
-        response.raise_for_status()
-
-        namespaces = {
-            'common': 'http://www.orcid.org/ns/common',
-            'funding': 'http://www.orcid.org/ns/funding'
-        }
-        
-        root = ET.fromstring(response.text)
-
-        return [
-            t.text for t in root.findall('.//funding:title/common:title', namespaces)
-            if t.text
-        ]
-    
     @handle_errors
     def get_orcid_works_data(self):
         orcid_id = None
@@ -383,7 +202,7 @@ class OrcidApp(BaseFlaskApp):
 
         elif request.method == 'POST':
             orcid_id = request.form.get('orcidInput')
-            if not self.validate_orcid_id(orcid_id):
+            if not validate_orcid_id(orcid_id):
                 flash("Invalid ORCiD format submitted. Use XXXX-XXXX-XXXX-XXXX.", "error")
                 return redirect(url_for('orcid_works_search'))
 
@@ -392,7 +211,7 @@ class OrcidApp(BaseFlaskApp):
         else:
             abort(405)
 
-        access_token = self._fetch_orcid_token()
+        access_token = fetch_orcid_token()
         if not access_token:
             flash("Could not authenticate with the ORCID service at this time. Please try again later.", "error")
             return redirect(url_for('orcid_works_search'))
@@ -409,8 +228,8 @@ class OrcidApp(BaseFlaskApp):
                                    orcidID=session_orcid)
         
         try:
-            session["full_name"] = name = self._get_name_from_orcid(orcid_id, access_token)
-            unique_titles = self._get_works_from_orcid(orcid_id, access_token)
+            session["full_name"] = name = get_name_from_orcid(orcid_id, access_token)
+            unique_titles = get_works_from_orcid(orcid_id, access_token)
 
             if len(unique_titles) == 0:
                 current_app.logger.error(f"No publication has been found in your ORCiD record.", "info")
@@ -431,7 +250,7 @@ class OrcidApp(BaseFlaskApp):
                 flash(f"Could not find an ORCID record matching {orcid_id}. Please check the ID.", "error")
             elif status_code == 401 or status_code == 403:
                 flash("Authorization error with ORCID. Please check credentials or contact support.", "error")
-                self._cache.delete_memoized(self._fetch_orcid_token)
+                self._cache.delete_memoized(fetch_orcid_token)
             else:
                 flash(f"Error fetching data from ORCID (Code: {status_code}). Please try again later.", "error")
             return redirect(url_for('orcid_works_search'))
@@ -456,12 +275,12 @@ class OrcidApp(BaseFlaskApp):
                 flash("Please log in with ORCID or enter your ORCID ID on the search page.", "error")
                 return redirect(url_for('orcid_works_search'))
 
-        access_token = self._fetch_orcid_token()
+        access_token = fetch_orcid_token()
         if not access_token:
             flash("Could not authenticate with the ORCID service at this time. Please try again later.", "error")
             return redirect(url_for('orcid_works_search'))
 
-        works_cache_key = self.cache_fetcher(orcid_id)
+        works_cache_key = cache_fetcher(orcid_id)
         fundings_cache_key = f"orcid_fundings_{orcid_id}"
 
         cached_data_works = self._cache.get(works_cache_key)
@@ -479,7 +298,7 @@ class OrcidApp(BaseFlaskApp):
 
         try:
             name = session.get("full_name")
-            titles = self._get_fundings_from_orcid(orcid_id, access_token)
+            titles = get_fundings_from_orcid(orcid_id, access_token)
 
             if not titles:
                 return redirect(url_for('no_fundings'))
@@ -515,7 +334,7 @@ class OrcidApp(BaseFlaskApp):
                 )
             elif status in (401, 403):
                 flash("Authorization error with ORCID. Please check credentials or contact support.", "error")
-                self._cache.delete_memoized(self._fetch_orcid_token)
+                self._cache.delete_memoized(fetch_orcid_token)
                 return redirect(url_for('orcid_works_search'))
             else:
                 flash(f"Error fetching funding data from ORCID (Code: {status}). Please try again later.", "error")
@@ -654,92 +473,6 @@ class OrcidApp(BaseFlaskApp):
             return redirect(url_for('orcid_works_search'))
 
         return redirect(url_for('info_form'))
-
-    @handle_errors
-    def initiate_orcid_auth(self):
-        state = secrets.token_urlsafe(16)
-        session['oauth_state'] = state
-        redirect_uri = os.getenv('ORCID_REDIRECT_URI')
-        if not redirect_uri:
-            flash("Application configuration error. Cannot initiate ORCID login.", "error")
-            return redirect(url_for('home'))
-
-        auth_url = (
-            f"https://orcid.org/oauth/authorize?"
-            f"client_id={os.getenv('ORCID_CLIENT_ID')}&"
-            "response_type=code&"
-            "scope=/authenticate&"
-            f"redirect_uri={redirect_uri}&"
-            f"state={state}"
-        )
-        return redirect(auth_url)
-
-    @handle_errors
-    def handle_orcid_callback(self):
-        received_state = request.args.get('state')
-        expected_state = session.pop('oauth_state', None)
-
-        if not expected_state or received_state != expected_state:
-            flash("Authentication session validation failed. Please try logging in again.", "error")
-            abort(401)
-
-        if 'error' in request.args:
-            error = request.args.get('error')
-            error_description = request.args.get('error_description', 'No description provided.')
-            flash(f"ORCID login failed: {error_description}", "error")
-            return redirect(url_for('orcid_works_search'))
-
-        code = request.args.get('code')
-        if not code:
-            flash("Failed to receive authorization from ORCID. Please try again.", "error")
-            abort(400)
-
-        token_url = "https://orcid.org/oauth/token"
-        headers = {"Accept": "application/json"}
-        redirect_uri = os.getenv('ORCID_REDIRECT_URI')
-        if not redirect_uri:
-             flash("Application configuration error. Cannot complete ORCID login.", "error")
-             abort(500)
-
-        data = {
-            "client_id": os.getenv("ORCID_CLIENT_ID"),
-            "client_secret": os.getenv("ORCID_CLIENT_SECRET"),
-            "grant_type": "authorization_code",
-            "code": code,
-            "redirect_uri": redirect_uri
-        }
-
-        try:
-            response = requests.post(token_url, headers=headers, data=data, timeout=10)
-            response.raise_for_status()
-        except requests.exceptions.RequestException:
-             flash("Could not communicate with ORCID to finalize login. Please try again.", "error")
-             abort(500)
-
-        if response.status_code != 200:
-            flash("Failed to finalize login with ORCID. Please try again.", "error")
-            abort(500)
-
-        try:
-            token_data = response.json()
-        except ValueError:
-             flash("Received an invalid response from ORCID. Please try again.", "error")
-             abort(500)
-
-        orcid_id = token_data.get("orcid")
-        user_name = token_data.get("name")
-
-        if not orcid_id:
-            flash("Failed to retrieve necessary credentials from ORCID. Please try again.", "error")
-            abort(500)
-
-        session['orcid_id'] = orcid_id
-        if user_name:
-             session['user_name'] = user_name
-        session.permanent = True
-        session.modified = True
-        
-        return redirect(url_for('get_orcid_works_data'))
 
     def admin_login(self):
         form = AdminLoginForm()
