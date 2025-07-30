@@ -16,34 +16,14 @@ import pandas as pd
 import requests
 import logging
 import secrets
+import bleach
 import click
 import re
 import os
 
 load_dotenv()
 
-def normalise_title(title):
-    if not title or not isinstance(title, str):
-        return ""
-    
-    normalised = title.lower()
-    normalised = re.sub(r'^(the|a|an)\s+', '', normalised)
-    normalised = re.sub(r'[^\w\s]', '', normalised)
-    normalised = re.sub(r'\s+', ' ', normalised).strip()
-    normalised = re.sub(r'&[a-zA-Z0-9#]+;', '', normalised)
-    normalised = normalised.encode('ascii', 'ignore').decode('ascii')
-    return normalised
-
-def sanitise_input(text):
-    if not text:
-        return ""
-    
-    # HTML tags and quotes sanitisation
-    cleaned = re.sub(r'<[^>]*>', '', text)
-    cleaned = cleaned.replace('"', '&quot;').replace("'", '&#39;')
-    return cleaned[:300]
-
-# Import SQLalchemy along with the database models (important)
+# Import models and database setup (Ensures 'db' is initialised)
 from models import db, User, Record, Admin, Feedback
 
 class AdminLoginForm(FlaskForm):
@@ -70,6 +50,26 @@ def init_db(app):
         with app.app_context():
             db.create_all()
     return wrapper
+
+def normalise_title(title):
+    if not title or not isinstance(title, str):
+        return ""
+    
+    normalised = title.lower()
+    normalised = re.sub(r'^(the|a|an)\s+', '', normalised)
+    normalised = re.sub(r'[^\w\s]', '', normalised)
+    normalised = re.sub(r'\s+', ' ', normalised).strip()
+    normalised = re.sub(r'&[a-zA-Z0-9#]+;', '', normalised)
+    normalised = normalised.encode('ascii', 'ignore').decode('ascii')
+    return normalised
+
+def sanitise_input(text):
+    if not text:
+        return ""
+    
+    # Use bleach to clean the input text by stripping all tags
+    cleaned = bleach.clean(text, tags=[], attributes={}, strip=True)
+    return cleaned[:300]
 
 class BaseFlaskApp:
     def __init__(self, app_name):
