@@ -1,6 +1,12 @@
+# ARC-Feedback
+
+[![License: MPL](https://img.shields.io/badge/License-MPLv2-blue.svg)](LICENSE.md)
+[![Run Tests](https://img.shields.io/github/actions/workflow/status/DurhamARC/ARC-Feedback/docker.yml?label=Docker%20Build)](https://github.com/DurhamARC/ARC-Feedback/actions/workflows/tests.yml)
+[![Run Tests](https://img.shields.io/github/actions/workflow/status/DurhamARC/ARC-Feedback/tests.yml?label=Unit%20Tests)](https://github.com/DurhamARC/ARC-Feedback/actions/workflows/tests.yml)
+[![codecov](https://img.shields.io/codecov/c/gh/DurhamARC/ARC-Feedback)](https://codecov.io/gh/DurhamARC/ARC-Feedback)
+
 <img width="100%" alt="roundcorners" src="https://github.com/user-attachments/assets/a0858ef9-d6ff-4028-904e-4356be1b833c" />
 
-# ARC-Feedback
 
 ## Description
 
