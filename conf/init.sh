@@ -17,8 +17,9 @@ ln -sf /dev/stderr /var/log/nginx/error.log
 service nginx start
 
 cd /app/SearchApp
-
+echo "Running migrations..."
 flask db upgrade
 
 # Add `--access-logfile '-' --log-level=debug \` for debugging
+echo "Starting the app..."
 exec $@
