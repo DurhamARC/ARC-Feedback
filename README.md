@@ -28,7 +28,7 @@
 
 ## Setup Instructions
 
-Follow these steps to set up and run the application locally:
+> Follow these steps to set up and run the application locally:
 
 1. Clone the repository:
 ```bash
@@ -47,7 +47,7 @@ pip install -r requirements.txt
 
 4. Configure environment variables:
 
-   Create a `.env` file in the root directory with the following variables:
+> Create a `.env` file in the root directory with the following variables:
 ```bash
 DATABASE_URL=your_database_url
 APP_SECRET_KEY=your_secret_key
@@ -57,34 +57,36 @@ ORCID_REDIRECT_URI=your_orcid_redirect_uri
 ENABLE_ORCID_LOGIN=true
 DEBUG=true
 ```
-   Replace placeholders with actual values:
-     - `DATABASE_URL`: Use `sqlite:///feedback.db` for local SQLite development or a PostgreSQL URI 
-       (`postgresql://user:password@localhost/dbname`) for production, as supported by the `docker-compose.yml` configuration.
-     - `APP_SECRET_KEY`: A securely generated secret key (can be generated using `secrets.token_hex(16)` in Python).
-     - `ORCID_CLIENT_ID` and `ORCID_CLIENT_SECRET`: Obtain these from your ORCID developer account.
-     - `ORCID_REDIRECT_URI`: The URI registered with ORCID (`http://localhost:5000/auth/orcid/callback` for local development).
+   > Replace placeholders with actual values:
 
-6. Initialise the database:
+   - `DATABASE_URL`: Use `sqlite:///feedback.db` for local SQLite development or a PostgreSQL URI 
+       (`postgresql://user:password@localhost/dbname`) for production, as supported by the `docker-compose.yml` configuration.
+   - `APP_SECRET_KEY`: A securely generated secret key (can be generated using `secrets.token_hex(16)` in Python).
+   - `ORCID_CLIENT_ID` and `ORCID_CLIENT_SECRET`: Obtain these from your ORCID developer account.
+   - `ORCID_REDIRECT_URI`: The URI registered with ORCID (`http://localhost:5000/auth/orcid/callback` for local development).
+
+
+5. Initialise the database:
    With Flask-Migrate configured in `wsgi.py`, run:
 ```bash
 flask db upgrade
 ```
-   (This applies migrations to create the database tables. Alternatively, running the app once with a valid `DATABASE_URL` will initialise the tables using `db.create_all()` from `ORCiD_API_App.py`)
+  > This applies migrations to create the database tables. Alternatively, running the app once with a valid `DATABASE_URL` will initialise the tables using `db.create_all()` from `ORCiD_API_App.py`
 
-7. Create an admin user:
+6. Create an admin user:
    Use the custom CLI command defined in `ORCiD_API_App.py`:
 ```bash
 flask create-admin username password
 ```
-   (Replace `username` and `password` with your desired credentials)
+  > Replace `username` and `password` with your desired credentials
 
-8. Run the application:
+7. Run the application:
 ```bash
 flask run
 ```
-   (The application will be available at `http://localhost:5000`)
+  > The application will be available at `http://localhost:5000`
 
-Note: For production, consider using a PostgreSQL database (as configured in `docker-compose.yml`) and running with Gunicorn, as specified in `Dockerfile.production`.
+> Note: For production, consider using a PostgreSQL database (as configured in `docker-compose.yml`) and running with Gunicorn, as specified in `Dockerfile.production`.
 
 ## Database Models
 
