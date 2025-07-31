@@ -23,7 +23,10 @@ import os
 load_dotenv()
 
 # utility functions
-from utils import *
+from utils import no_publications, no_fundings, get_access_token, initiate_orcid_auth, handle_orcid_callback
+from utils import get_works_from_orcid, get_fundings_from_orcid, get_name_from_orcid
+from utils import fetch_orcid_token, validate_orcid_id, normalise_title, sanitise_input
+from utils import cache_fetcher, admin_required, handle_errors, reset_publications
 
 # models and database setup (ensures 'db' is initialised)
 from models import db, User, Record, Admin, Feedback
