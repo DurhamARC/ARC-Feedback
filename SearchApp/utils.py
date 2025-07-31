@@ -1,4 +1,9 @@
-from ORCiD_API_App import re, redirect, current_app, flash, url_for, session, requests, ET, os, render_template, secrets, abort, request
+import re
+from flask import redirect, current_app, flash, url_for, session, render_template, abort, request
+import requests
+import xml.etree.ElementTree as ET
+import os
+import secrets
 from flask import jsonify
 from models import Record, db
 from functools import wraps
@@ -130,22 +135,20 @@ def get_fundings_from_orcid(orcid_id, access_token):
     ]
 
 def fetch_orcid_token():
-    def inner_fetch():
-        url = "https://orcid.org/oauth/token"
-        headers = {"Accept": "application/json"}
-        data = {
-            "client_id": os.getenv("ORCID_CLIENT_ID"),
-            "client_secret": os.getenv("ORCID_CLIENT_SECRET"),
-            "grant_type": "client_credentials",
-            "scope": "/read-public"
-        }
-        try:
-            response = requests.post(url, headers=headers, data=data, timeout=10)
-            response.raise_for_status()
-            return response.json().get("access_token")
-        except requests.exceptions.RequestException as e:
-            return flash(f"Error: Request exception inside of fetch_orcid_token: {e}", "error")
-    return inner_fetch()
+    url = "https://orcid.org/oauth/token"
+    headers = {"Accept": "application/json"}
+    data = {
+        "client_id": os.getenv("ORCID_CLIENT_ID"),
+        "client_secret": os.getenv("ORCID_CLIENT_SECRET"),
+        "grant_type": "client_credentials",
+        "scope": "/read-public"
+    }
+    try:
+        response = requests.post(url, headers=headers, data=data, timeout=10)
+        response.raise_for_status()
+        return response.json().get("access_token")
+    except requests.exceptions.RequestException as e:
+        return flash(f"Error: Request exception inside of fetch_orcid_token: {e}", "error")
 
 @handle_errors
 def reset_publications():
