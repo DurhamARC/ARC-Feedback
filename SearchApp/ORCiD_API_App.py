@@ -371,7 +371,7 @@ class OrcidApp(BaseFlaskApp):
         else:
             orcid_input = request.form.get("orcidID", "").strip()
 
-        if username and len(username) > 201 or len(username) < 1:
+        if username and (len(username) > 201 or len(username) < 1):
             flash('Username is too long/short.', 'error')
             return redirect(url_for('orcid_connect'))
 
@@ -432,7 +432,7 @@ class OrcidApp(BaseFlaskApp):
         else:
             orcid_input = request.form.get("orcidID", "").strip()
 
-        if username and len(username) > 201 or len(username) < 1:
+        if username and (len(username) > 201 or len(username) < 1):
             flash('Username is too long/short.', 'error')
             return redirect(url_for('orcid_connect'))
 
