@@ -14,7 +14,7 @@ class User(db.Model):
     orcid = db.Column(db.String(19), nullable=False, unique=True, index=True)
     name = db.Column(db.String(100), nullable=False, index=True)
     created_at = db.Column(db.DateTime, default=uk_time, nullable=False, index=True)
-    records = db.relationship('Record', backref='users', lazy=True)
+    records = db.relationship('Record', back_populates='user', lazy=True)
     __table_args__ = (
         db.Index('idx_user_orcid_name', 'orcid', 'name'),
     )
@@ -27,6 +27,7 @@ class Record(db.Model):
     type = db.Column(db.Enum('publication', 'funding', name='record_type'), nullable=False, index=True)
     created_at = db.Column(db.DateTime, default=uk_time, nullable=False, index=True)
     submission_id = db.Column(db.String(32), nullable=False, index=True)
+    user = db.relationship('User', back_populates='records')
     __table_args__ = (
         db.Index('idx_record_orcid_type', 'orcid', 'type'),
     )

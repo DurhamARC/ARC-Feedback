@@ -213,7 +213,11 @@ def handle_orcid_callback():
     received_state = request.args.get('state')
     expected_state = session.pop('oauth_state', None)
 
-    if not expected_state or received_state != expected_state:
+    pattern = r'^[A-Za-z0-9_-]+$'
+
+    if re.fullmatch(pattern, expected_state) and re.fullmatch(pattern, received_state):
+        pass
+    else:
         flash("Authentication session validation failed. Please try logging in again.", "error")
         abort(401)
 
