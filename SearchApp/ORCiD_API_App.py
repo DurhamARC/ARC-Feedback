@@ -16,7 +16,6 @@ import requests
 import logging
 import secrets
 import click
-import re
 import os
 
 # load environment variables from the .env file
