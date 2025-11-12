@@ -16,7 +16,6 @@ import requests
 import logging
 import secrets
 import click
-import re
 import os
 
 # load environment variables from the .env file
@@ -110,7 +109,7 @@ class OrcidApp(BaseFlaskApp):
         
     def _register_routes(self):
         self.app.route("/")(self.home)
-        self.app.route("/publications/sso")(self.orcid_works_search)
+        self.app.route("/publications/sso")(self.orcid_connect)
         self.app.route("/about")(self.about)
         self.app.route("/thankyou", methods=['GET', 'POST'])(
             self.thankyou
@@ -145,7 +144,7 @@ class OrcidApp(BaseFlaskApp):
         return render_template("home.html")
 
     @handle_errors
-    def orcid_works_search(self):
+    def orcid_connect(self):
         return render_template("orcid_id_works.html", enable_orcid_login=os.getenv('ENABLE_ORCID_LOGIN', 'true').lower() in ('true'), debug_mode=current_app.debug)
 
     @handle_errors
@@ -159,7 +158,7 @@ class OrcidApp(BaseFlaskApp):
                 orcid_id = session['orcid_id']
             else:
                 flash("Please log in with ORCID.", "info")
-                return redirect(url_for('orcid_works_search'))
+                return redirect(url_for('orcid_connect'))
 
         if request.method == 'POST' and request.form.get('action') == 'submit':
             try:
@@ -183,7 +182,7 @@ class OrcidApp(BaseFlaskApp):
             except Exception:
                 logging.exception("Error while saving the message:")
                 flash('An error occurred while saving the message. Please try again.', 'error')
-                return redirect(url_for('orcid_works_search'))
+                return redirect(url_for('orcid_connect'))
                 
         return render_template("form.html")
 
@@ -207,7 +206,7 @@ class OrcidApp(BaseFlaskApp):
             orcid_id = request.form.get('orcidInput')
             if not validate_orcid_id(orcid_id):
                 flash("Invalid ORCiD format submitted. Use XXXX-XXXX-XXXX-XXXX.", "error")
-                return redirect(url_for('orcid_works_search'))
+                return redirect(url_for('orcid_connect'))
 
             session['orcid_id'] = orcid_id
             session.permanent = True
@@ -217,7 +216,7 @@ class OrcidApp(BaseFlaskApp):
         access_token = fetch_orcid_token()
         if not access_token:
             flash("Could not authenticate with the ORCID service at this time. Please try again later.", "error")
-            return redirect(url_for('orcid_works_search'))
+            return redirect(url_for('orcid_connect'))
 
         cache_key = f"orcid_works_{orcid_id}"
         cached_data = self._cache.get(cache_key)
@@ -256,16 +255,16 @@ class OrcidApp(BaseFlaskApp):
                 self._cache.delete_memoized(fetch_orcid_token)
             else:
                 flash(f"Error fetching data from ORCID (Code: {status_code}). Please try again later.", "error")
-            return redirect(url_for('orcid_works_search'))
+            return redirect(url_for('orcid_connect'))
         except requests.exceptions.RequestException as e:
             flash("Could not connect to the ORCID service. Please check your network or try again later.", "error")
-            return redirect(url_for('orcid_works_search'))
+            return redirect(url_for('orcid_connect'))
         except ET.ParseError as e:
             flash("Received invalid data format from ORCID. Please try again.", "error")
-            return redirect(url_for('orcid_works_search'))
+            return redirect(url_for('orcid_connect'))
         except Exception as e:
             flash("An unexpected error occurred while processing your publications.", "error")
-            return redirect(url_for('orcid_works_search'))
+            return redirect(url_for('orcid_connect'))
 
     @handle_errors
     def get_orcid_fundings_data(self):
@@ -276,12 +275,12 @@ class OrcidApp(BaseFlaskApp):
                 orcid_id = session['orcid_id']
             else:
                 flash("Please log in with ORCID or enter your ORCID ID on the search page.", "error")
-                return redirect(url_for('orcid_works_search'))
+                return redirect(url_for('orcid_connect'))
 
         access_token = fetch_orcid_token()
         if not access_token:
             flash("Could not authenticate with the ORCID service at this time. Please try again later.", "error")
-            return redirect(url_for('orcid_works_search'))
+            return redirect(url_for('orcid_connect'))
 
         works_cache_key = cache_fetcher(orcid_id)
         fundings_cache_key = f"orcid_fundings_{orcid_id}"
@@ -338,23 +337,23 @@ class OrcidApp(BaseFlaskApp):
             elif status in (401, 403):
                 flash("Authorization error with ORCID. Please check credentials or contact support.", "error")
                 self._cache.delete_memoized(fetch_orcid_token)
-                return redirect(url_for('orcid_works_search'))
+                return redirect(url_for('orcid_connect'))
             else:
                 flash(f"Error fetching funding data from ORCID (Code: {status}). Please try again later.", "error")
-                return redirect(url_for('orcid_works_search'))
+                return redirect(url_for('orcid_connect'))
 
         except requests.exceptions.RequestException:
             flash("Could not connect to the ORCID service for fundings. Please check your network or try again later.", "error")
-            return redirect(url_for('orcid_works_search'))
+            return redirect(url_for('orcid_connect'))
 
         except ET.ParseError:
             flash("Received invalid data format from ORCID for fundings. Please try again.", "error")
-            return redirect(url_for('orcid_works_search'))
+            return redirect(url_for('orcid_connect'))
 
         except Exception as exc:
             current_app.logger.error(f"Unexpected error in get_orcid_fundings_data: {exc}")
             flash("An unexpected error occurred while processing your fundings.", "error")
-            return redirect(url_for('orcid_works_search'))
+            return redirect(url_for('orcid_connect'))
 
     def process_works_form(self):
         selected_titles = request.form.getlist('selected_titles')
@@ -368,13 +367,13 @@ class OrcidApp(BaseFlaskApp):
             orcid_input = request.form.get("orcidInput", "").strip()
             if not orcid_input:
                 flash('Invalid or missing ORCID ID.', 'error')
-                return redirect(url_for('orcid_works_search'))
+                return redirect(url_for('orcid_connect'))
         else:
             orcid_input = request.form.get("orcidID", "").strip()
 
-        if username and len(username) > 201:
-            flash('Invalid characters in name or name too long/short.', 'error')
-            return redirect(url_for('orcid_works_search'))
+        if username and len(username) > 201 or len(username) < 1:
+            flash('Username is too long/short.', 'error')
+            return redirect(url_for('orcid_connect'))
 
         try:
             with self.app.app_context():
@@ -396,7 +395,7 @@ class OrcidApp(BaseFlaskApp):
                             title=title,
                             type='publication',
                             orcid=orcid_input,
-                            users=user,
+                            user=user,
                             submission_id=submission_id
                         )
                         db.session.add(record)
@@ -413,7 +412,7 @@ class OrcidApp(BaseFlaskApp):
             db.session.rollback()
             logging.exception("Error saving publications:")
             flash('An error occurred while saving the publications. Please try again.', 'error')
-            return redirect(url_for('orcid_works_search'))
+            return redirect(url_for('orcid_connect'))
 
         return redirect(url_for('get_orcid_fundings_data'))
 
@@ -429,13 +428,13 @@ class OrcidApp(BaseFlaskApp):
             orcid_input = request.form.get("orcidInput")
             if not orcid_input:
                 flash('Invalid or missing ORCID ID.', 'error')
-                return redirect(url_for('orcid_works_search'))
+                return redirect(url_for('orcid_connect'))
         else:
             orcid_input = request.form.get("orcidID", "").strip()
 
-        if username and not re.match(r"^(n/a|[a-zA-Zà-ÿ.' -]{1,100})$", username, re.IGNORECASE):
-            flash('Invalid characters in name or name too long/short.', 'error')
-            return redirect(url_for('orcid_works_search'))
+        if username and len(username) > 201 or len(username) < 1:
+            flash('Username is too long/short.', 'error')
+            return redirect(url_for('orcid_connect'))
 
         try:
             with self.app.app_context():
@@ -456,7 +455,7 @@ class OrcidApp(BaseFlaskApp):
                             title=title,
                             type='funding',
                             orcid=orcid_input,
-                            users=user,
+                            user=user,
                             submission_id=submission_id
                         )
                         db.session.add(record)
@@ -473,7 +472,7 @@ class OrcidApp(BaseFlaskApp):
         except Exception:
             db.session.rollback()
             flash('An error occurred while saving the funding records. Please try again.', 'error')
-            return redirect(url_for('orcid_works_search'))
+            return redirect(url_for('orcid_connect'))
 
         return redirect(url_for('info_form'))
 
